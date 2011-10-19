@@ -1,1 +1,6 @@
 * text=auto !eol
+copy_this/core/d3ce_online_users.php -text
+copy_this/modules/d3ce_usersonline/views/d3ce_oxcmp_utils_usersonline.php -text
+copy_this/out/basic/tpl/inc/d3ce_usersonline.tpl -text
+setup+doku/readme_de.txt -text
+setup+doku/readme_en.txt -text
