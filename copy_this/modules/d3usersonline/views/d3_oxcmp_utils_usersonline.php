@@ -16,7 +16,7 @@
  * @author Aggrosoft, D³ Data Development
  */
 
-class d3ce_oxcmp_utils_usersonline extends d3ce_oxcmp_utils_usersonline_parent
+class d3_oxcmp_utils_usersonline extends d3_oxcmp_utils_usersonline_parent
 {
     protected $_iExpTime = 600; // (in seconds)
     protected $_sUserIpHash = null;
@@ -46,7 +46,7 @@ class d3ce_oxcmp_utils_usersonline extends d3ce_oxcmp_utils_usersonline_parent
         $this->_sUserIpHash = md5($this->_getTrueIP());
         $this->utime = time();
 
-        $oUserOnline = &oxNew('d3ce_online_users');
+        $oUserOnline = oxNew('d3usersonline');
         $oUserOnline->clearOldItems($this->_iExpTime);
         $iUserExist = $oUserOnline->getActUserItem($this->_sUserIpHash);
 
@@ -136,9 +136,5 @@ class d3ce_oxcmp_utils_usersonline extends d3ce_oxcmp_utils_usersonline_parent
                 }
             }
         }
-
     }
-
-
-
 }

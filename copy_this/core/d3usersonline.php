@@ -16,55 +16,55 @@
  * @author Aggrosoft, D³ Data Development
  */
 
-class d3ce_online_users extends oxI18n
+class d3usersonline extends oxI18n
 {
     /**
      * Object core table name
      *
      * @var string
      */
-    protected $_sCoreTbl = 'd3ce_online_users';
+    protected $_sCoreTbl = 'd3usersonline';
 
     /**
      * Current class name
      *
      * @var string
      */
-    protected $_sClassName = 'd3ce_online_users';
+    protected $_sClassName = 'd3usersonline';
 
     public function __construct($aParams = null)
     {
         parent::__construct();
-        $this->init( 'd3ce_online_users' );
+        $this->init( 'd3usersonline' );
     }
 
     public function clearOldItems($iExpTime)
     {
 	    $exptime = time() - $iExpTime;
-        oxDb::getDb()->Execute("delete from ".$this->_sCoreTbl." where timevisit < $exptime");
+        oxDb::getDb()->Execute("delete from ".$this->getViewName()." where timevisit < $exptime");
     }
 
     public function getActUserItem($sUserIPHash)
     {
-        $sSelect = "select count(*) from $this->_sCoreTbl where visitor='".$sUserIPHash."'";
+        $sSelect = "select count(*) from ".$this->getViewName()." where visitor= ".oxDb::getDb()->quote($sUserIPHash);
         return oxDb::getDb()->getOne( $sSelect );
     }
 
     public function getUserCount()
     {
-        $sSelect = "select count(*) from ".$this->_sCoreTbl." order by timevisit desc";
+        $sSelect = "select count(*) from ".$this->getViewName()." order by timevisit desc";
         $iCount = oxDb::getDb()->getOne($sSelect);
         return $iCount;
     }
 
     public function setActTimeVisit($sUserIpHash)
     {
-		oxDb::getDb()->Execute("update ".$this->_sCoreTbl." set timevisit='".time()."', oxclass = '".$this->getConfig()->getActiveView()->getClassName()."' where visitor='".$sUserIpHash."'");
+		oxDb::getDb()->Execute("update ".$this->getViewName()." set timevisit= ".oxDb::getDb()->quote(time()).", oxclass = ".oxDb::getDb()->quote($this->getConfig()->getActiveView()->getClassName())." where visitor= ".oxDb::getDb()->quote($sUserIpHash));
     }
 
     public function insertActUser($sUserIpHash)
     {
-        oxDb::getDb()->Execute("insert into ".$this->_sCoreTbl." (visitor,timevisit,oxclass) values ('".$sUserIpHash."','".time()."', '".$this->getConfig()->getActiveView()->getClassName()."')");
+        oxDb::getDb()->Execute("insert into ".$this->getViewName()." (visitor,timevisit,oxclass) values (".oxDb::getDb()->quote($sUserIpHash).", ".oxDb::getDb()->quote(time()).", ".oxDb::getDb()->quote($this->getConfig()->getActiveView()->getClassName()).")");
     }
 
 }

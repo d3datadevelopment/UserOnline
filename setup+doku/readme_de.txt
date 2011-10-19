@@ -21,17 +21,17 @@ Kopieren Sie die Inhalte des "copy_this"-Ordner in Ihr Shop-Verzeichnis,
 
 Führen Sie folgendes Script in Ihrer Datenbank aus:
 
-CREATE TABLE d3ce_online_users (
-	`id` int(11) NOT NULL auto_increment,
-	`visitor` varchar(100) default NULL,
-	`timevisit` int(11) NOT NULL default '0',
-	`oxclass` varchar(32) collate latin1_general_ci NOT NULL,
-	PRIMARY KEY (id)
+CREATE TABLE d3usersonline (
+    `id` int(11) NOT NULL auto_increment,
+    `visitor` varchar(100) default NULL,
+    `timevisit` int(11) NOT NULL default '0',
+    `oxclass` varchar(32) collate latin1_general_ci NOT NULL,
+    PRIMARY KEY (id)
 ) TYPE=MyISAM;
 
 Fügen Sie nun das Modul zu Ihrem Shop hinzu:
 
-oxcmp_utils => d3ce_usersonline/views/d3ce_oxcmp_utils_usersonline
+oxcmp_utils => d3usersonline/views/d3_oxcmp_utils_usersonline
 
 Sie können den counter nun in eines Ihrer Templates einbauen (evtl. _left.tpl)
 Hierfür benötigen Sie lediglich folgende Zeile:

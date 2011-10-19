@@ -1,6 +1,10 @@
 * text=auto !eol
-copy_this/core/d3ce_online_users.php -text
-copy_this/modules/d3ce_usersonline/views/d3ce_oxcmp_utils_usersonline.php -text
-copy_this/out/basic/tpl/inc/d3ce_usersonline.tpl -text
+changed_full/XE451-XE453/out/azure/tpl/inc/d3usersonline.tpl -text
+changed_full/XE451-XE453/out/azure/tpl/layout/sidebar.tpl -text
+changed_full/XE451-XE453/out/basic/tpl/_left.tpl -text
+changed_full/XE451-XE453/out/basic/tpl/inc/d3usersonline.tpl -text
+copy_this/core/d3usersonline.php -text
+copy_this/modules/d3usersonline/views/d3_oxcmp_utils_usersonline.php -text
 setup+doku/readme_de.txt -text
 setup+doku/readme_en.txt -text
+source/UsersOnline-Installation.docx -text
