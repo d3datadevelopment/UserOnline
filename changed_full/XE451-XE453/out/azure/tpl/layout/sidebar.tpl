@@ -16,9 +16,7 @@
     [{/block}]
 
     [{*** D3 Modul "UsersOnline" START ***}]
-        [{if $oxcmp_user && $oxcmp_user->oxuser__oxrights->value == 'malladmin'}]
-            [{include file="inc/d3usersonline.tpl"}]
-        [{/if}]
+        [{include file="inc/d3usersonline.tpl"}]
     [{*** D3 Modul "UsersOnline" END ***}]
 
     [{block name="sidebar_trustedshopsratings"}]
