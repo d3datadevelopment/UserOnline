@@ -1,4 +1,19 @@
 * text=auto !eol
+changed_full/420-448/out/basic/de/d3_usersonline_lang.php -text
+changed_full/420-448/out/basic/tpl/_left.tpl -text
+changed_full/420-448/out/basic/tpl/inc/d3usersonline.tpl -text
+changed_full/450/out/azure/de/d3_usersonline_lang.php -text
+changed_full/450/out/azure/tpl/inc/d3usersonline.tpl -text
+changed_full/450/out/azure/tpl/layout/sidebar.tpl -text
+changed_full/450/out/basic/de/d3_usersonline_lang.php -text
+changed_full/450/out/basic/tpl/_left.tpl -text
+changed_full/450/out/basic/tpl/inc/d3usersonline.tpl -text
+changed_full/451-453/out/azure/de/d3_usersonline_lang.php -text
+changed_full/451-453/out/azure/tpl/inc/d3usersonline.tpl -text
+changed_full/451-453/out/azure/tpl/layout/sidebar.tpl -text
+changed_full/451-453/out/basic/de/d3_usersonline_lang.php -text
+changed_full/451-453/out/basic/tpl/_left.tpl -text
+changed_full/451-453/out/basic/tpl/inc/d3usersonline.tpl -text
 changed_full/XE420-XE448/out/basic/de/d3_usersonline_lang.php -text
 changed_full/XE420-XE448/out/basic/tpl/_left.tpl -text
 changed_full/XE420-XE448/out/basic/tpl/inc/d3usersonline.tpl -text
