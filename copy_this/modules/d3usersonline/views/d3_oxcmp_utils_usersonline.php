@@ -56,7 +56,7 @@ class d3_oxcmp_utils_usersonline extends d3_oxcmp_utils_usersonline_parent
             $oUserOnline->insertActUser($this->_sUserIpHash);
 		}
 
-        $this->_oParent->_aViewData['usersonline'] = $oUserOnline->getUserCount();
+        $this->_oParent->_aViewData['aUsersOnline'] = $oUserOnline->getUserCount();
 
         return $ret;
     }

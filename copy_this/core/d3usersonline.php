@@ -52,9 +52,28 @@ class d3usersonline extends oxI18n
 
     public function getUserCount()
     {
-        $sSelect = "select count(*) from ".$this->getViewName()." order by timevisit desc";
-        $iCount = oxDb::getDb()->getOne($sSelect);
-        return $iCount;
+        $sSelect = "select count(*) counter, oxclass from ".$this->getViewName()." GROUP BY oxclass ORDER BY counter desc";
+
+        $rs = oxDb::getDb(1)->Execute($sSelect);
+
+        $iAllCounter = 0;
+        $aUserClasses = array();
+        if ($rs != false && $rs->RecordCount() > 0)
+        {
+            while (!$rs->EOF)
+            {
+                $oTmp = new stdClass;
+                $oTmp->classname = $rs->fields['oxclass'];
+                $oTmp->counter = $rs->fields['counter'];
+                $iAllCounter += $rs->fields['counter'];
+                $aUserClasses['classes'][] = $oTmp;
+                $rs->moveNext();
+            }
+        }
+
+        $aUserClasses['all'] = $iAllCounter;
+
+        return $aUserClasses;
     }
 
     public function setActTimeVisit($sUserIpHash)
