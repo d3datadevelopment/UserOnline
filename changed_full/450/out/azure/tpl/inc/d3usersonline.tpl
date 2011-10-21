@@ -20,7 +20,13 @@
                 </tr>
                 [{foreach from=$aUsersOnline.classes item="aClassUser"}]
                     <tr>
-                        <td>[{$aClassUser->classname|ucfirst}]:</td>
+                        <td>
+                            [{if $aClassUser->classname}]
+                                [{$aClassUser->classname|ucfirst}]:
+                            [{else}]
+                                undefined:
+                            [{/if}]
+                        </td>
                         <td style="text-align: right;">
                             <b>[{$aClassUser->counter}]</b>
                         </td>
