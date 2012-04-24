@@ -54,7 +54,7 @@ class d3usersonline extends oxI18n
     {
         $sSelect = "select count(*) counter, oxclass from ".$this->getViewName()." GROUP BY oxclass ORDER BY counter desc";
 
-        $rs = oxDb::getDb(1)->Execute($sSelect);
+        $rs = oxDb::getDb(2)->Execute($sSelect);
 
         $iAllCounter = 0;
         $aUserClasses = array();
