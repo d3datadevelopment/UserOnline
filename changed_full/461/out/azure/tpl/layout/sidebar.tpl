@@ -15,9 +15,9 @@
         [{/if}]
     [{/block}]
 
-[{*** D3 Modul "UsersOnline" START ***}]
+    [{*** D3 Modul "UsersOnline" START ***}]
         [{include file="inc/d3usersonline.tpl"}]
-{{*** D3 Modul "UsersOnline" END ***}]
+    [{*** D3 Modul "UsersOnline" END ***}]
 
     [{block name="sidebar_trustedshopsratings"}]
         [{if $oView->getClassName() eq "start"}]
