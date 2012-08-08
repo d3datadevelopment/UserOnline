@@ -1,8 +1,12 @@
 <?php
 /**
- * Module information
+ * Metadata version
  */
 $sMetadataVersion = '1.0';
+
+/**
+ * Module information
+ */
 $aModule = array(
     'id'           => 'd3useronline',
     'title'        => oxLang::getInstance()->translateString('D3_USERONLINE_METADATA_TITLE'),
