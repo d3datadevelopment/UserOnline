@@ -4,4 +4,4 @@ CREATE TABLE d3usersonline (
     `timevisit` int(11) NOT NULL default '0',
     `oxclass` varchar(32) collate latin1_general_ci NOT NULL,
     PRIMARY KEY (id)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
