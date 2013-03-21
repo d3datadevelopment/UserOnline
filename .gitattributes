@@ -20,10 +20,10 @@ changed_full/461/out/azure/tpl/layout/sidebar.tpl -text
 changed_full/461/out/basic/tpl/_left.tpl -text
 changed_full/461/out/basic/tpl/inc/d3usersonline.tpl -text
 changed_full/461/out/de/d3_usersonline_lang.php -text
-copy_this/core/d3usersonline.php -text
-copy_this/modules/d3usersonline/metadata.php -text
-copy_this/modules/d3usersonline/picture.png -text
-copy_this/modules/d3usersonline/views/d3_oxcmp_utils_usersonline.php -text
+copy_this/modules/d3/d3usersonline/metadata.php -text
+copy_this/modules/d3/d3usersonline/models/d3usersonline.php -text
+copy_this/modules/d3/d3usersonline/modules/components/d3_oxcmp_utils_usersonline.php -text
+copy_this/modules/d3/d3usersonline/picture.png -text
 setup+doku/Installation.pdf -text
 setup+doku/install.sql -text
 source/Re[!!-~]D3[!!-~]Users[!!-~]Online[!!-~]kit[!!-~]Oxid[!!-~]CE[!!-~]4.7.eml -text
