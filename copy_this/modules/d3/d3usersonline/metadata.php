@@ -1,18 +1,58 @@
 <?php
 /**
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author    D3 Data Development - Daniel Seifert <support@shopmodule.com>
+ * @link      http://www.oxidmodule.com
+ */
+
+/**
+ * Metadata version
+ */
+$sMetadataVersion = '1.1';
+
+/**
  * Module information
  */
-$sMetadataVersion = '1.0';
 $aModule = array(
-    'id'           => 'd3useronline',
-    'title'        => oxLang::getInstance()->translateString('D3_USERONLINE_METADATA_TITLE'),
-    'description'  => oxLang::getInstance()->translateString('D3_USERONLINE_METADATA_DESC'),
-    'thumbnail'    => 'picture.png',
-    'version'      => '1.2.1',
-    'author'       => oxLang::getInstance()->translateString('D3_MOD_LIB_METADATA_AUTHOR'),
-    'email'        => 'support@shopmodule.com',
-    'url'          => 'http://www.oxidmodule.com/',
+    'id'          => 'd3usersonline',
+    'title'       =>
+    (class_exists('d3utils') ? d3utils::getInstance()->getD3Logo() : 'D&sup3;') . ' Users Online',
+    'description' => array(
+        'de' => 'Lassen Sie sich anonym im Shop anzeigen, wie viele Benutzer zur Zeit Ihren Shop besuchen und welche Seiten angezeigt werden. Das Modul speichert nicht die IP-Adresse oder sonstige Daten des Nutzers. Damit genügen Sie auch dem deutschen Recht.',
+        'en' => '',
+    ),
+    'thumbnail'   => 'picture.png',
+    'version'     => '2.0.0.0',
+    'author'      => 'D&sup3; Data Development (Inh.: Thomas Dartsch)',
+    'email'       => 'support@shopmodule.com',
+    'url'         => 'http://www.oxidmodule.com/',
     'extend'      => array(
-        'oxcmp_utils' => 'd3usersonline/views/d3_oxcmp_utils_usersonline'
+        'oxcmp_utils'  => 'd3/d3usersonline/modules/components/d3_oxcmp_utils_usersonline',
+    ),
+    'files'       => array(
+        'd3usersonline'            => 'd3/d3usersonline/models/d3usersonline.php',
+        'd3usersonline_update'     => 'd3/d3usersonline/models/d3usersonline_update.php',
+    ),
+    'templates'   => array(
+        //'d3_cfg_extsearch_main.tpl'            => 'd3/d3_extsearch/views/admin/tpl/d3_cfg_extsearch_main.tpl',
+    ),
+    'events'      => array(
+        'onActivate' => 'd3install::checkUpdateStart',
+    ),
+    'blocks'      => array(
+        array('template' => 'layout/sidebar.tpl', 'block' => 'sidebar_categoriestree',
+              'file'     => 'views/blocks/layout/d3usersonline_sidebar.tpl'),
     )
 );
