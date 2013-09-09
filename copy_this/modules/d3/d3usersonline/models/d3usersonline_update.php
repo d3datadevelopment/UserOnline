@@ -22,20 +22,24 @@ class d3usersonline_update extends d3install_updatebase
 {
     public $sModKey = 'd3usersonline';
     public $sModName = 'Users Online';
-    public $sModVersion = '2.0.0.0';
-    public $sModRevision = '24';
-    public $sBaseConf = 'qnqSkx5WGk0V0xyY0wwVWNKTE5qSy9oY3RZeXdOSHhtd1c5aW9PWEltei9aWXg2RTBoOUErUi9UcVZFb
-W1RVUpWM1ZwTTBLU2plR3RxNzVXSVREQUFqd0V4cTQ5ZHVYQTYvVEFYKzdXMkE3aTM0SFgvbEZsZzlwU
-VJKeTltWmVISFQ5YmY1Y0Q5aDRFRGZ4b2FoenlOb1p5Y0c2aFdnRXVmQVdTK2VubzBhc2hvUkVQbVBhV
-jFJeWdqRUZOSEFnekZVZmF2eCtIcThzeDBqNU1JdWkrZG9MQlhFdUNyd3NhUzlkL05YVDAvaEhjS04vZ
-2xRL0w2U2ZlOEFjTXB3aGp1UmRFS2dmVGNocXhCT2dQY0MzZkVvckVOU1BoMG5Ma053UTNhYlNtMklQZ
-DQ9';
+    public $sModVersion = '2.0.0.1';
+    public $sModRevision = '26';
+    public $sBaseConf = 'fDTR3hjTlJlNFErRXBGTkNUSU9zdXNPNTVFUm0wZFMvMEYyTEVUeDdCL0VNVnZZNHh2Yk9YVDA1djBnV
+VNQRTJVaGFqc0NHT1dOUkY5YlZVM3k0ODBESHNkRnhSM1UrMnJLQXNMSlhMcUg1WGZLcEkyd2hGN2Uzc
+0JjdFFtZ3VvZmZFMUNrWDg4SUlqN1l3UmhPL2tmSEFOWC95MWNoNEtiLzIySlBENE42d0lwKzVOaXM1b
+nhIcTZXQnF2L25maUcycHRjRGNJOFFISWNMbUtKMWh3TjhXN2RBSGtSRzhieUZBL1lEdlNzbkxhVDRnK
+zJIUlBNUHkzVmN5T0lVOG5pWCs2d0Q1b2kzM1ExeklaOXcxcEIyMGx0ejZGK0N6Rm9Pam9QNGNiL0RWS
+kU9';
     public $sRequirements = '';
     public $sBaseValue = '';
 
     protected $_aUpdateMethods = array(
         array('check' => 'checkUsersOnlineTableExist',
               'do'    => 'updateUsersOnlineTableExist'),
+        array('check' => 'checkRenameFields',
+              'do'    => 'fixRenameFields'),
+        array('check' => 'checkDeleteFields',
+              'do'    => 'fixDeleteFields'),
         array('check' => 'checkModCfgItemExist',
               'do'    => 'updateModCfgItemExist'),
         array('check' => 'checkFields',
@@ -94,6 +98,41 @@ DQ9';
             'aFields'    => array(
                 'OXCLASS' => 'OXCLASS',
             ),
+        ),
+    );
+
+    public $aRenameFields = array(
+        'OXID'        => array(
+            'sTableName'  => 'd3usersonline',
+            'mOldFieldNames' => array('id', 'ID'), // is case sensitive
+            'sFieldName'  => 'OXID',
+            'blMultilang' => FALSE,
+        ),
+        'VISITOR'        => array(
+            'sTableName'  => 'd3usersonline',
+            'mOldFieldNames' => array('visitor'), // is case sensitive
+            'sFieldName'  => 'VISITOR',
+            'blMultilang' => FALSE,
+        ),
+        'TIMEVISIT'        => array(
+            'sTableName'  => 'd3usersonline',
+            'mOldFieldNames' => array('timevisit'), // is case sensitive
+            'sFieldName'  => 'TIMEVISIT',
+            'blMultilang' => FALSE,
+        ),
+        'OXCLASS'        => array(
+            'sTableName'  => 'd3usersonline',
+            'mOldFieldNames' => array('oxclass'), // is case sensitive
+            'sFieldName'  => 'OXCLASS',
+            'blMultilang' => FALSE,
+        ),
+    );
+
+    public $aDeleteFields = array(
+        'VISITOR'        => array(
+            'sTableName'  => 'd3usersonline',
+            'sFieldName'  => 'VISITOR',
+            'blMultilang' => FALSE,
         ),
     );
 

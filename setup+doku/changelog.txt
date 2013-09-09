@@ -1,0 +1,6 @@
+=> 2.0.0.1
+- ModulID korrigiert
+- Datenbankstruktur bei Altinstallationen aktualisiert
+
+=> 2.0.0.0
+- für OXID 4.7 / 5.0 angepasst

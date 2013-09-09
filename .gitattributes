@@ -9,6 +9,7 @@ copy_this/modules/d3/d3usersonline/picture.png -text
 copy_this/modules/d3/d3usersonline/translations/de/d3usersonline_lang.php -text
 copy_this/modules/d3/d3usersonline/translations/en/d3usersonline_lang.php -text
 setup+doku/Installation.pdf -text
+setup+doku/changelog.txt -text
 setup+doku/d3precheck.php -text
 source/Re[!!-~]D3[!!-~]Users[!!-~]Online[!!-~]kit[!!-~]Oxid[!!-~]CE[!!-~]4.7.eml -text
 source/UsersOnline[!!-~]v1.2.1[!!-~]CE4_Kundenversion_4.7.0.zip -text
