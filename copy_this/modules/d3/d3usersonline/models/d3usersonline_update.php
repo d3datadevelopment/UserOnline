@@ -22,14 +22,14 @@ class d3usersonline_update extends d3install_updatebase
 {
     public $sModKey = 'd3usersonline';
     public $sModName = 'Users Online';
-    public $sModVersion = '2.0.0.1';
-    public $sModRevision = '26';
-    public $sBaseConf = 'fDTR3hjTlJlNFErRXBGTkNUSU9zdXNPNTVFUm0wZFMvMEYyTEVUeDdCL0VNVnZZNHh2Yk9YVDA1djBnV
-VNQRTJVaGFqc0NHT1dOUkY5YlZVM3k0ODBESHNkRnhSM1UrMnJLQXNMSlhMcUg1WGZLcEkyd2hGN2Uzc
-0JjdFFtZ3VvZmZFMUNrWDg4SUlqN1l3UmhPL2tmSEFOWC95MWNoNEtiLzIySlBENE42d0lwKzVOaXM1b
-nhIcTZXQnF2L25maUcycHRjRGNJOFFISWNMbUtKMWh3TjhXN2RBSGtSRzhieUZBL1lEdlNzbkxhVDRnK
-zJIUlBNUHkzVmN5T0lVOG5pWCs2d0Q1b2kzM1ExeklaOXcxcEIyMGx0ejZGK0N6Rm9Pam9QNGNiL0RWS
-kU9';
+    public $sModVersion = '2.0.0.2';
+    public $sModRevision = '28';
+    public $sBaseConf = 'Z5yR2NUcFoyV3BHTVFTZDZ5bFByMmtkTDh5YjFMUW5JV0QrZ0dTeEliMVJTREFSTzRkRTAySEJzblEwU
+GFXMjNMM0RCQXA0NzNEaXA2anJ0Y2dlRWNNM3l3UlB2M0ZoQlFwMkhsM1QwVjh1K0hmdTMzU0wyT3lKe
+k84UTQ2d0phQzlRcWdxOUZQNzIyVFlERHdUZm5YeENPanFlVTUxclJnZWtaTENOKzhuYkpvQ1N3eDBYO
+EEvRnFqQ2FzUXVCQnQ2QkJVOXBYSVNLOExnK3RTb2c1OTdzaE55N0d6ZnM5VFd4TE1oR09oZ0ZoK0RhL
+29tZ0pLWGhDWFpXK1ZncXpPOTZ2OTBSdEQzdnYyUTduZy96N1JYeGlrQ3JvNlplVEg1aHVEY2hJRTFha
+k09';
     public $sRequirements = '';
     public $sBaseValue = '';
 
@@ -93,7 +93,7 @@ kU9';
         ),
         'OXCLASS' => array(
             'sTableName' => 'd3usersonline',
-            'sType'      => 'PRIMARY',
+            'sType'      => '',
             'sName'      => 'OXCLASS',
             'aFields'    => array(
                 'OXCLASS' => 'OXCLASS',
