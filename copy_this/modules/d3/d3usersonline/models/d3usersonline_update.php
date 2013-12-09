@@ -74,7 +74,7 @@ k09';
         'OXCLASS'            => array(
             'sTableName'  => 'd3usersonline',
             'sFieldName'  => 'OXCLASS',
-            'sType'       => 'VARCHAR(32)',
+            'sType'       => 'VARCHAR(255)',
             'blNull'      => FALSE,
             'sDefault'    => FALSE,
             'sComment'    => '',

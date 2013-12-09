@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<OX>
+    <OXMENU id="d3mxd3modules">
+        <MAINMENU id="d3useronline">
+            <SUBMENU id="d3_d3useronlineschalter_controllers_admin_useronline" cl="d3_d3useronlineschalter_controllers_admin_useronline"/>
+        </MAINMENU>
+    </OXMENU>
+</OX>

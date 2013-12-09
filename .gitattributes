@@ -1,7 +1,13 @@
 * text=auto !eol
-changed_full/EE500-/modules/d3/d3usersonline/views/blocks/layout/d3usersonline_sidebar.tpl -text
+changed_full/PE470-/modules/d3/d3useronlineschalter/views/admin/d3usersonline.tpl -text
+changed_full/PE470-/modules/d3/d3useronlineschalter/views/admin/de/d3usersonline_lang.php -text
+changed_full/PE470-/modules/d3/d3useronlineschalter/views/admin/en/d3usersonline_lang.php -text
 changed_full/PE470-/modules/d3/d3usersonline/views/blocks/layout/d3usersonline_sidebar.tpl -text
 copy_this/.noencode -text
+copy_this/modules/d3/d3useronlineschalter/controllers/admin/useronline.php -text
+copy_this/modules/d3/d3useronlineschalter/d3useronlineschalter_stub.php -text
+copy_this/modules/d3/d3useronlineschalter/menu.xml -text
+copy_this/modules/d3/d3useronlineschalter/metadata.php -text
 copy_this/modules/d3/d3usersonline/metadata.php -text
 copy_this/modules/d3/d3usersonline/models/d3usersonline.php -text
 copy_this/modules/d3/d3usersonline/models/d3usersonline_update.php -text

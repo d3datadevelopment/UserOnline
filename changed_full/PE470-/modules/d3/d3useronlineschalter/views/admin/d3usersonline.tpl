@@ -1,5 +1,8 @@
+[{include file="headitem.tpl" title="GENERAL_ADMIN_TITLE"|oxmultilangassign}]
+[{assign var='oxcmp_user' value=$oView->getUser()}]
 [{d3modcfgcheck modid="d3usersonline"}]
     [{if $oxcmp_user && $oxcmp_user->getFieldData('oxrights') == 'malladmin'}]
+        [{assign var='aUsersOnline' value=$oView->getOnlineUsersByController()}]
         <div class="box">
             <h3>[{oxmultilang ident="D3_USERSONLINE_USERSONLINE"}]</h3>
             <div class="content">
@@ -9,10 +12,10 @@
                             [{oxmultilang ident="D3_USERSONLINE_ALL"}]
                         </td>
                         <td style="border-bottom: 1px solid silver; text-align: right; font-weight: bold;">
-                            [{$aUsersOnline.all}]&nbsp;
+                            [{$oView->getOnlineUsersAll()}]&nbsp;
                         </td>
                         <td style="border-bottom: 1px solid silver; text-align: left;">
-                            [{if $aUsersOnline.all == 1}]
+                            [{if $oView->getOnlineUsersAll() == 1}]
                                 [{oxmultilang ident="D3_USERSONLINE_USER"}]
                             [{else}]
                                 [{oxmultilang ident="D3_USERSONLINE_USERS"}]
@@ -45,5 +48,4 @@
         </div>
     [{/if}]
 [{/d3modcfgcheck}]
-
-[{$smarty.block.parent}]
+[{include file="bottomitem.tpl"}]
