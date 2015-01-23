@@ -1,4 +1,7 @@
 * text=auto !eol
+Sources/Screenshots/Backend.jpg -text
+Sources/Screenshots/Frontend.jpg -text
+Sources/UsersOnline-Installation.docx -text
 copy_this/.noencode -text
 copy_this/modules/d3/d3usersonline/IntelliSenseHelper.php -text
 copy_this/modules/d3/d3usersonline/controllers/admin/d3_cfg_usersonline.php -text
@@ -24,6 +27,3 @@ copy_this/modules/d3/d3usersonline/views/blocks/layout/d3usersonline_sidebar.tpl
 setup+doku/Installation.pdf -text
 setup+doku/Precheck/d3precheck.php -text
 setup+doku/changelog.txt -text
-source/Screenshots/Backend.jpg -text
-source/Screenshots/Frontend.jpg -text
-source/UsersOnline-Installation.docx -text
