@@ -30,16 +30,14 @@ class d3_oxcmp_utils_usersonline extends d3_oxcmp_utils_usersonline_parent
     {
         $sRet = parent::render();
 
-        if (d3_cfg_mod::get($this->_sD3UsersOnlineModId)->isActive())
-        {
+        if (d3_cfg_mod::get($this->_sD3UsersOnlineModId)->isActive()) {
             /** @var d3usersonline $oUsersOnline */
             $oUsersOnline = oxNew('d3usersonline');
             $oUsersOnline->clearOldItems($this->_iExpTime);
             $oUsersOnline->setActTimeVisit();
 
             $oUser = $this->getUser();
-            if ($oUser && strtolower($oUser->getFieldData('oxrights')) == 'malladmin')
-            {
+            if ($oUser && strtolower($oUser->getFieldData('oxrights')) == 'malladmin') {
                 /** @var oxview $oActView */
                 $oActView = $this->getParent();
                 $oActView->addTplParam('aUsersOnline', $oUsersOnline->getUserCount());

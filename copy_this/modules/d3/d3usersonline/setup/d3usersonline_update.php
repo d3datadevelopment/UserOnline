@@ -22,14 +22,14 @@ class d3usersonline_update extends d3install_updatebase
 {
     public $sModKey = 'd3usersonline';
     public $sModName = 'Users Online';
-    public $sModVersion = '2.0.0.2';
-    public $sModRevision = '28';
-    public $sBaseConf = 'Z5yR2NUcFoyV3BHTVFTZDZ5bFByMmtkTDh5YjFMUW5JV0QrZ0dTeEliMVJTREFSTzRkRTAySEJzblEwU
-GFXMjNMM0RCQXA0NzNEaXA2anJ0Y2dlRWNNM3l3UlB2M0ZoQlFwMkhsM1QwVjh1K0hmdTMzU0wyT3lKe
-k84UTQ2d0phQzlRcWdxOUZQNzIyVFlERHdUZm5YeENPanFlVTUxclJnZWtaTENOKzhuYkpvQ1N3eDBYO
-EEvRnFqQ2FzUXVCQnQ2QkJVOXBYSVNLOExnK3RTb2c1OTdzaE55N0d6ZnM5VFd4TE1oR09oZ0ZoK0RhL
-29tZ0pLWGhDWFpXK1ZncXpPOTZ2OTBSdEQzdnYyUTduZy96N1JYeGlrQ3JvNlplVEg1aHVEY2hJRTFha
-k09';
+    public $sModVersion = '2.0.1.0';
+    public $sModRevision = '39';
+    public $sBaseConf = 'esySjhjTE5Va2RmRXhYWHlFVTluQkhzUGMzZEhWWUtLS2ZyYm5Fb1BCQWlONjBiRmtnMmZjaVpqbWF3M
+DRzRDRKRTlRbktRTmkwMmNiTjd5bTRHd2pjZkI3MGx5bGdGZjJyNU1mbFM2NzQ4bW5FWGEraUg1QWlMd
+kZqSHFkNkdPZ05XbzdNa0tlWGNmUWNIOVFaMEdvZzROU05TZEp3UFdPRDZRdHdPbFZYdFZrcmR5UHRDV
+GdVVTV3Y1RCd1JRMGJuZ1JHVWpxYWM4Q0o1czkvakk4SE8zdngwaWI4aFRPQ0ZPa2JKVHRGWTlpTnJBM
+WwzTnVBSUtDdVA2cTgzRzJhODRXTFZDeUJLaUpSNzQ5OThmVFF6eldYbEI2bUVRSlBNRGtXdWg2T0VwS
+Ws9';
     public $sRequirements = '';
     public $sBaseValue = '';
 
@@ -46,8 +46,16 @@ k09';
               'do'    => 'fixFields'),
         array('check' => 'checkIndizes',
               'do'    => 'fixIndizes'),
+        array('check' => 'hasOldModuleFiles',
+              'do'    => 'deleteOldModuleFiles'),
+        array('check' => 'hasUnregisteredFiles',
+              'do'    => 'showUnregisteredFiles'),
         array('check' => 'checkModCfgSameRevision',
               'do'    => 'updateModCfgSameRevision'),
+    );
+
+    public $aOldModuleFiles = array(
+        'd3/d3usersonline/models/d3usersonline_update.php',
     );
 
     public $aFields = array(
@@ -55,31 +63,31 @@ k09';
             'sTableName'  => 'd3usersonline',
             'sFieldName'  => 'OXID',
             'sType'       => 'char(32)',
-            'blNull'      => FALSE,
-            'sDefault'    => FALSE,
+            'blNull'      => false,
+            'sDefault'    => false,
             'sComment'    => '',
             'sExtra'      => '',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'TIMEVISIT' => array(
             'sTableName'  => 'd3usersonline',
             'sFieldName'  => 'TIMEVISIT',
             'sType'       => 'INT(11)',
-            'blNull'      => FALSE,
+            'blNull'      => false,
             'sDefault'    => '0',
             'sComment'    => '',
             'sExtra'      => '',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'OXCLASS'            => array(
             'sTableName'  => 'd3usersonline',
             'sFieldName'  => 'OXCLASS',
             'sType'       => 'VARCHAR(32)',
-            'blNull'      => FALSE,
-            'sDefault'    => FALSE,
+            'blNull'      => false,
+            'sDefault'    => false,
             'sComment'    => '',
             'sExtra'      => '',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
     );
 
@@ -106,25 +114,25 @@ k09';
             'sTableName'  => 'd3usersonline',
             'mOldFieldNames' => array('id', 'ID'), // is case sensitive
             'sFieldName'  => 'OXID',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'VISITOR'        => array(
             'sTableName'  => 'd3usersonline',
             'mOldFieldNames' => array('visitor'), // is case sensitive
             'sFieldName'  => 'VISITOR',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'TIMEVISIT'        => array(
             'sTableName'  => 'd3usersonline',
             'mOldFieldNames' => array('timevisit'), // is case sensitive
             'sFieldName'  => 'TIMEVISIT',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'OXCLASS'        => array(
             'sTableName'  => 'd3usersonline',
             'mOldFieldNames' => array('oxclass'), // is case sensitive
             'sFieldName'  => 'OXCLASS',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
     );
 
@@ -132,14 +140,14 @@ k09';
         'VISITOR'        => array(
             'sTableName'  => 'd3usersonline',
             'sFieldName'  => 'VISITOR',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
     );
 
     protected $_aRefreshMetaModuleIds = array('d3usersonline');
 
     /**
-     * @return bool TRUE, if table is missing
+     * @return bool true, if table is missing
      */
     public function checkUsersOnlineTableExist()
     {
@@ -151,13 +159,10 @@ k09';
      */
     public function updateUsersOnlineTableExist()
     {
-        $blRet = TRUE;
+        $blRet = true;
 
-        if ($this->checkUsersOnlineTableExist())
-        {
-            $aRet  = $this->_addTable('d3usersonline', $this->aFields, $this->aIndizes, 'users online', 'MyISAM');
-            $blRet = $aRet['blRet'];
-            $this->_setActionLog('SQL', $aRet['sql'], __METHOD__);
+        if ($this->checkUsersOnlineTableExist()) {
+            $blRet = $this->_addTable2('d3usersonline', $this->aFields, $this->aIndizes, 'users online', 'MyISAM');
         }
 
         return $blRet;
@@ -168,9 +173,8 @@ k09';
      */
     public function checkModCfgItemExist()
     {
-        $blRet = FALSE;
-        foreach ($this->_getShopList() as $oShop)
-        {
+        $blRet = false;
+        foreach ($this->getShopList() as $oShop) {
             /** @var $oShop oxshop */
             $aWhere = array(
                 'oxmodid'       => $this->sModKey,
@@ -180,8 +184,7 @@ k09';
 
             $blRet = $this->_checkTableItemNotExist('d3_cfg_mod', $aWhere);
 
-            if ($blRet)
-            {
+            if ($blRet) {
                 return $blRet;
             }
         }
@@ -194,12 +197,10 @@ k09';
      */
     public function updateModCfgItemExist()
     {
-        $blRet = FALSE;
+        $blRet = false;
 
-        if ($this->checkModCfgItemExist())
-        {
-            foreach ($this->_getShopList() as $oShop)
-            {
+        if ($this->checkModCfgItemExist()) {
+            foreach ($this->getShopList() as $oShop) {
                 /** @var $oShop oxshop */
                 $aWhere = array(
                     'oxmodid'       => $this->sModKey,
@@ -207,86 +208,98 @@ k09';
                     'oxnewrevision' => $this->sModRevision,
                 );
 
-                if ($this->_checkTableItemNotExist('d3_cfg_mod', $aWhere))
-                {
+                if ($this->_checkTableItemNotExist('d3_cfg_mod', $aWhere)) {
                     // update don't use this property
                     unset($aWhere['oxnewrevision']);
 
                     $aInsertFields = array(
                         'OXID'           => array (
                             'content'       => "md5('" . $this->sModKey . " " . $oShop->getId() . " de')",
-                            'force_update'  => TRUE,
-                            'use_quote'     => FALSE,
+                            'force_update'  => true,
+                            'use_quote'     => false,
                         ),
                         'OXSHOPID'       => array (
                             'content'       => $oShop->getId(),
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXMODID'        => array (
                             'content'       => $this->sModKey,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXNAME'         => array (
                             'content'       => $this->sModName,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXACTIVE'       => array (
                             'content'       => "0",
-                            'force_update'  => FALSE,
-                            'use_quote'     => FALSE,
+                            'force_update'  => false,
+                            'use_quote'     => false,
                         ),
                         'OXBASECONFIG'   => array (
                             'content'       => $this->sBaseConf,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXSERIAL'   => array (
                             'content'       => "",
-                            'force_update'  => FALSE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => false,
+                            'use_quote'     => true,
                         ),
                         'OXINSTALLDATE'  => array (
                             'content'       => "NOW()",
-                            'force_update'  => TRUE,
-                            'use_quote'     => FALSE,
+                            'force_update'  => true,
+                            'use_quote'     => false,
                         ),
                         'OXVERSION'      => array (
                             'content'       => $this->sModVersion,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXSHOPVERSION'  => array (
                             'content'       => oxRegistry::getConfig()->getEdition(),
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXREQUIREMENTS' => array (
                             'content'       => $this->sRequirements,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXVALUE'        => array(
                             'content'       => $this->sBaseValue,
-                            'force_update'  => FALSE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => false,
+                            'use_quote'     => true,
                         ),
                         'OXNEWREVISION'  => array(
                             'content'       => $this->sModRevision,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         )
                     );
-                    $aRet          = $this->_updateTableItem('d3_cfg_mod', $aInsertFields, $aWhere);
-                    $blRet         = $aRet['blRet'];
-
-                    $this->_setActionLog('SQL', $aRet['sql'], __METHOD__);
-                    $this->_setUpdateBreak(FALSE);
+                    $blRet          = $this->_updateTableItem2('d3_cfg_mod', $aInsertFields, $aWhere);
+                    $this->setUpdateBreak(false);
                 }
             }
         }
         return $blRet;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasUnregisteredFiles()
+    {
+        return $this->_hasUnregisteredFiles($this->sModKey, array('d3FileRegister', 'blocks'));
+    }
+
+    /**
+     * @return bool
+     */
+    public function showUnregisteredFiles()
+    {
+        return $this->_showUnregisteredFiles($this->sModKey, array('d3FileRegister', 'blocks'));
     }
 }

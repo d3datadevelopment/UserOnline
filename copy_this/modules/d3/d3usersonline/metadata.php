@@ -30,11 +30,13 @@ $aModule = array(
     'title'       =>
     (class_exists('d3utils') ? d3utils::getInstance()->getD3Logo() : 'D&sup3;') . ' Users Online',
     'description' => array(
-        'de' => 'Lassen Sie sich anonym im Shop anzeigen, wie viele Benutzer zur Zeit Ihren Shop besuchen und welche Seiten angezeigt werden. Das Modul speichert nicht die IP-Adresse oder sonstige Daten des Nutzers. Damit genügen Sie auch dem deutschen Recht.',
+        'de' => 'Lassen Sie sich anonym im Shop anzeigen, wie viele Benutzer zur Zeit Ihren Shop besuchen und welche '.
+            'Seiten angezeigt werden. Das Modul speichert nicht die IP-Adresse oder sonstige Daten des Nutzers. Damit '.
+            'gen&uuml;gen Sie auch dem deutschen Recht.',
         'en' => '',
     ),
     'thumbnail'   => 'picture.png',
-    'version'     => '2.0.0.2',
+    'version'     => '2.0.1.0',
     'author'      => 'D&sup3; Data Development (Inh.: Thomas Dartsch)',
     'email'       => 'support@shopmodule.com',
     'url'         => 'http://www.oxidmodule.com/',
@@ -43,16 +45,35 @@ $aModule = array(
     ),
     'files'       => array(
         'd3usersonline'            => 'd3/d3usersonline/models/d3usersonline.php',
-        'd3usersonline_update'     => 'd3/d3usersonline/models/d3usersonline_update.php',
+        'd3usersonline_update'     => 'd3/d3usersonline/setup/d3usersonline_update.php',
+        'd3_cfg_usersonline'       => 'd3/d3usersonline/controllers/admin/d3_cfg_usersonline.php',
+        'd3_cfg_usersonline_licence' => 'd3/d3usersonline/controllers/admin/d3_cfg_usersonline_licence.php',
+        'd3_cfg_usersonline_list'  => 'd3/d3usersonline/controllers/admin/d3_cfg_usersonline_list.php',
+        'd3_cfg_usersonline_main'  => 'd3/d3usersonline/controllers/admin/d3_cfg_usersonline_main.php',
+        'd3_usersonline'           => 'd3/d3usersonline/controllers/admin/d3_usersonline.php',
+        'd3_usersonline_list'      => 'd3/d3usersonline/controllers/admin/d3_usersonline_list.php',
+        'd3_usersonline_statistic' => 'd3/d3usersonline/controllers/admin/d3_usersonline_statistic.php',
     ),
     'templates'   => array(
-        //'d3_cfg_extsearch_main.tpl'            => 'd3/d3_extsearch/views/admin/tpl/d3_cfg_extsearch_main.tpl',
+        'd3_cfg_usersonline_main.tpl'  => 'd3/d3usersonline/views/admin/tpl/d3_cfg_usersonline_main.tpl',
+        'd3_usersonline_statistic.tpl' => 'd3/d3usersonline/views/admin/tpl/d3_usersonline_statistic.tpl',
     ),
     'events'      => array(
         'onActivate' => 'd3install::checkUpdateStart',
     ),
     'blocks'      => array(
-        array('template' => 'layout/sidebar.tpl', 'block' => 'sidebar_categoriestree',
-              'file'     => 'views/blocks/layout/d3usersonline_sidebar.tpl'),
-    )
+        array(
+            'template' => 'layout/sidebar.tpl',
+            'block' => 'sidebar_categoriestree',
+            'file'     => 'views/blocks/layout/d3usersonline_sidebar.tpl'
+        ),
+    ),
+    'd3FileRegister'    => array(
+        'd3/d3usersonline/IntelliSenseHelper.php',
+        'd3/d3usersonline/metadata.php',
+        'd3/d3usersonline/translations/de/d3usersonline_lang.php',
+        'd3/d3usersonline/translations/en/d3usersonline_lang.php',
+        'd3/d3usersonline/views/admin/de/d3usersonline_lang.php',
+        'd3/d3usersonline/views/admin/en/d3usersonline_lang.php',
+    ),
 );
