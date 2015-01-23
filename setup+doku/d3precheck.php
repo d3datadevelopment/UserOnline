@@ -152,7 +152,7 @@ class requcheck
                 'aParams' => array(
                     'd3modcfg_lib',
                     'Modul-Connector',
-                    '3.9.0.5'
+                    '4.3.1.0'
                 ),
             ),
         ),

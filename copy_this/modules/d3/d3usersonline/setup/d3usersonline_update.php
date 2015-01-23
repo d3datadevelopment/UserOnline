@@ -46,8 +46,16 @@ k09';
               'do'    => 'fixFields'),
         array('check' => 'checkIndizes',
               'do'    => 'fixIndizes'),
+        array('check' => 'hasOldModuleFiles',
+              'do'    => 'deleteOldModuleFiles'),
+        array('check' => 'hasUnregisteredFiles',
+              'do'    => 'showUnregisteredFiles'),
         array('check' => 'checkModCfgSameRevision',
               'do'    => 'updateModCfgSameRevision'),
+    );
+
+    public $aOldModuleFiles = array(
+        'd3/d3usersonline/models/d3usersonline_update.php',
     );
 
     public $aFields = array(
@@ -153,11 +161,8 @@ k09';
     {
         $blRet = true;
 
-        if ($this->checkUsersOnlineTableExist())
-        {
-            $aRet  = $this->_addTable('d3usersonline', $this->aFields, $this->aIndizes, 'users online', 'MyISAM');
-            $blRet = $aRet['blRet'];
-            $this->_setActionLog('SQL', $aRet['sql'], __METHOD__);
+        if ($this->checkUsersOnlineTableExist()) {
+            $blRet = $this->_addTable2('d3usersonline', $this->aFields, $this->aIndizes, 'users online', 'MyISAM');
         }
 
         return $blRet;
@@ -169,7 +174,7 @@ k09';
     public function checkModCfgItemExist()
     {
         $blRet = false;
-        foreach ($this->_getShopList() as $oShop) {
+        foreach ($this->getShopList() as $oShop) {
             /** @var $oShop oxshop */
             $aWhere = array(
                 'oxmodid'       => $this->sModKey,
@@ -195,7 +200,7 @@ k09';
         $blRet = false;
 
         if ($this->checkModCfgItemExist()) {
-            foreach ($this->_getShopList() as $oShop) {
+            foreach ($this->getShopList() as $oShop) {
                 /** @var $oShop oxshop */
                 $aWhere = array(
                     'oxmodid'       => $this->sModKey,
@@ -274,14 +279,27 @@ k09';
                             'use_quote'     => true,
                         )
                     );
-                    $aRet          = $this->_updateTableItem('d3_cfg_mod', $aInsertFields, $aWhere);
-                    $blRet         = $aRet['blRet'];
-
-                    $this->_setActionLog('SQL', $aRet['sql'], __METHOD__);
-                    $this->_setUpdateBreak(false);
+                    $blRet          = $this->_updateTableItem2('d3_cfg_mod', $aInsertFields, $aWhere);
+                    $this->setUpdateBreak(false);
                 }
             }
         }
         return $blRet;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasUnregisteredFiles()
+    {
+        return $this->_hasUnregisteredFiles($this->sModKey, array('d3FileRegister', 'blocks'));
+    }
+
+    /**
+     * @return bool
+     */
+    public function showUnregisteredFiles()
+    {
+        return $this->_showUnregisteredFiles($this->sModKey, array('d3FileRegister', 'blocks'));
     }
 }

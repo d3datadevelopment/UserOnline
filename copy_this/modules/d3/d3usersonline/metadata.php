@@ -67,5 +67,13 @@ $aModule = array(
             'block' => 'sidebar_categoriestree',
             'file'     => 'views/blocks/layout/d3usersonline_sidebar.tpl'
         ),
-    )
+    ),
+    'd3FileRegister'    => array(
+        'd3/d3usersonline/IntelliSenseHelper.php',
+        'd3/d3usersonline/metadata.php',
+        'd3/d3usersonline/translations/de/d3usersonline_lang.php',
+        'd3/d3usersonline/translations/en/d3usersonline_lang.php',
+        'd3/d3usersonline/views/admin/de/d3usersonline_lang.php',
+        'd3/d3usersonline/views/admin/en/d3usersonline_lang.php',
+    ),
 );
