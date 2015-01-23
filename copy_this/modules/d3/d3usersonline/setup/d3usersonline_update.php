@@ -55,31 +55,31 @@ k09';
             'sTableName'  => 'd3usersonline',
             'sFieldName'  => 'OXID',
             'sType'       => 'char(32)',
-            'blNull'      => FALSE,
-            'sDefault'    => FALSE,
+            'blNull'      => false,
+            'sDefault'    => false,
             'sComment'    => '',
             'sExtra'      => '',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'TIMEVISIT' => array(
             'sTableName'  => 'd3usersonline',
             'sFieldName'  => 'TIMEVISIT',
             'sType'       => 'INT(11)',
-            'blNull'      => FALSE,
+            'blNull'      => false,
             'sDefault'    => '0',
             'sComment'    => '',
             'sExtra'      => '',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'OXCLASS'            => array(
             'sTableName'  => 'd3usersonline',
             'sFieldName'  => 'OXCLASS',
             'sType'       => 'VARCHAR(32)',
-            'blNull'      => FALSE,
-            'sDefault'    => FALSE,
+            'blNull'      => false,
+            'sDefault'    => false,
             'sComment'    => '',
             'sExtra'      => '',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
     );
 
@@ -106,25 +106,25 @@ k09';
             'sTableName'  => 'd3usersonline',
             'mOldFieldNames' => array('id', 'ID'), // is case sensitive
             'sFieldName'  => 'OXID',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'VISITOR'        => array(
             'sTableName'  => 'd3usersonline',
             'mOldFieldNames' => array('visitor'), // is case sensitive
             'sFieldName'  => 'VISITOR',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'TIMEVISIT'        => array(
             'sTableName'  => 'd3usersonline',
             'mOldFieldNames' => array('timevisit'), // is case sensitive
             'sFieldName'  => 'TIMEVISIT',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
         'OXCLASS'        => array(
             'sTableName'  => 'd3usersonline',
             'mOldFieldNames' => array('oxclass'), // is case sensitive
             'sFieldName'  => 'OXCLASS',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
     );
 
@@ -132,14 +132,14 @@ k09';
         'VISITOR'        => array(
             'sTableName'  => 'd3usersonline',
             'sFieldName'  => 'VISITOR',
-            'blMultilang' => FALSE,
+            'blMultilang' => false,
         ),
     );
 
     protected $_aRefreshMetaModuleIds = array('d3usersonline');
 
     /**
-     * @return bool TRUE, if table is missing
+     * @return bool true, if table is missing
      */
     public function checkUsersOnlineTableExist()
     {
@@ -151,7 +151,7 @@ k09';
      */
     public function updateUsersOnlineTableExist()
     {
-        $blRet = TRUE;
+        $blRet = true;
 
         if ($this->checkUsersOnlineTableExist())
         {
@@ -168,9 +168,8 @@ k09';
      */
     public function checkModCfgItemExist()
     {
-        $blRet = FALSE;
-        foreach ($this->_getShopList() as $oShop)
-        {
+        $blRet = false;
+        foreach ($this->_getShopList() as $oShop) {
             /** @var $oShop oxshop */
             $aWhere = array(
                 'oxmodid'       => $this->sModKey,
@@ -180,8 +179,7 @@ k09';
 
             $blRet = $this->_checkTableItemNotExist('d3_cfg_mod', $aWhere);
 
-            if ($blRet)
-            {
+            if ($blRet) {
                 return $blRet;
             }
         }
@@ -194,12 +192,10 @@ k09';
      */
     public function updateModCfgItemExist()
     {
-        $blRet = FALSE;
+        $blRet = false;
 
-        if ($this->checkModCfgItemExist())
-        {
-            foreach ($this->_getShopList() as $oShop)
-            {
+        if ($this->checkModCfgItemExist()) {
+            foreach ($this->_getShopList() as $oShop) {
                 /** @var $oShop oxshop */
                 $aWhere = array(
                     'oxmodid'       => $this->sModKey,
@@ -207,83 +203,82 @@ k09';
                     'oxnewrevision' => $this->sModRevision,
                 );
 
-                if ($this->_checkTableItemNotExist('d3_cfg_mod', $aWhere))
-                {
+                if ($this->_checkTableItemNotExist('d3_cfg_mod', $aWhere)) {
                     // update don't use this property
                     unset($aWhere['oxnewrevision']);
 
                     $aInsertFields = array(
                         'OXID'           => array (
                             'content'       => "md5('" . $this->sModKey . " " . $oShop->getId() . " de')",
-                            'force_update'  => TRUE,
-                            'use_quote'     => FALSE,
+                            'force_update'  => true,
+                            'use_quote'     => false,
                         ),
                         'OXSHOPID'       => array (
                             'content'       => $oShop->getId(),
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXMODID'        => array (
                             'content'       => $this->sModKey,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXNAME'         => array (
                             'content'       => $this->sModName,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXACTIVE'       => array (
                             'content'       => "0",
-                            'force_update'  => FALSE,
-                            'use_quote'     => FALSE,
+                            'force_update'  => false,
+                            'use_quote'     => false,
                         ),
                         'OXBASECONFIG'   => array (
                             'content'       => $this->sBaseConf,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXSERIAL'   => array (
                             'content'       => "",
-                            'force_update'  => FALSE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => false,
+                            'use_quote'     => true,
                         ),
                         'OXINSTALLDATE'  => array (
                             'content'       => "NOW()",
-                            'force_update'  => TRUE,
-                            'use_quote'     => FALSE,
+                            'force_update'  => true,
+                            'use_quote'     => false,
                         ),
                         'OXVERSION'      => array (
                             'content'       => $this->sModVersion,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXSHOPVERSION'  => array (
                             'content'       => oxRegistry::getConfig()->getEdition(),
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXREQUIREMENTS' => array (
                             'content'       => $this->sRequirements,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         ),
                         'OXVALUE'        => array(
                             'content'       => $this->sBaseValue,
-                            'force_update'  => FALSE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => false,
+                            'use_quote'     => true,
                         ),
                         'OXNEWREVISION'  => array(
                             'content'       => $this->sModRevision,
-                            'force_update'  => TRUE,
-                            'use_quote'     => TRUE,
+                            'force_update'  => true,
+                            'use_quote'     => true,
                         )
                     );
                     $aRet          = $this->_updateTableItem('d3_cfg_mod', $aInsertFields, $aWhere);
                     $blRet         = $aRet['blRet'];
 
                     $this->_setActionLog('SQL', $aRet['sql'], __METHOD__);
-                    $this->_setUpdateBreak(FALSE);
+                    $this->_setUpdateBreak(false);
                 }
             }
         }

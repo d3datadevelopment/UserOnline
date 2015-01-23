@@ -38,7 +38,7 @@ class d3usersonline extends oxbase
     public function __construct()
     {
         parent::__construct();
-        $this->init( 'd3usersonline' );
+        $this->init('d3usersonline');
     }
 
     /**
@@ -48,8 +48,8 @@ class d3usersonline extends oxbase
     {
         startProfile(__METHOD__);
 
-	    $exptime = time() - $iExpTime;
-        oxDb::getDb()->Execute("delete from ".$this->getViewName()." where timevisit < $exptime");
+        $iExptime = time() - $iExpTime;
+        oxDb::getDb()->Execute("delete from ".$this->getViewName()." where timevisit < $iExptime");
 
         stopProfile(__METHOD__);
     }
@@ -61,15 +61,14 @@ class d3usersonline extends oxbase
     {
         startProfile(__METHOD__);
 
-        $sSelect = "select count(oxid) AS counter, oxclass from ".$this->getViewName()." GROUP BY oxclass ORDER BY counter desc";
+        $sSelect = "select count(oxid) AS counter, oxclass from ".
+            $this->getViewName()." GROUP BY oxclass ORDER BY counter desc";
         $aRecords = oxDb::getDb(oxDb::FETCH_MODE_ASSOC)->getArray($sSelect);
 
         $iAllCounter = 0;
         $aUserClasses = array();
-        if ($aRecords && is_array($aRecords) && count($aRecords))
-        {
-            foreach ($aRecords as $aRecord)
-            {
+        if ($aRecords && is_array($aRecords) && count($aRecords)) {
+            foreach ($aRecords as $aRecord) {
                 $aRecord = array_change_key_case($aRecord, CASE_UPPER);
 
                 $oTmp = new stdClass;
@@ -130,50 +129,43 @@ class d3usersonline extends oxbase
         $this->_getIpData('_httpComingFrom', 'HTTP_COMING_FROM');
 
         // Gets the default ip sent by the user
-        if (!empty($this->_remoteAddr))
+        if (!empty($this->_remoteAddr)) {
             $sDirectIp = $this->_remoteAddr;
+        }
 
         // Gets the proxy ip sent by the user
-        if (!empty($this->_httpXForwardedFor))
+        if (!empty($this->_httpXForwardedFor)) {
             $sProxyIp = $this->_httpXForwardedFor;
-        else if (!empty($this->_httpXForwarded))
+        } elseif (!empty($this->_httpXForwarded)) {
             $sProxyIp = $this->_httpXForwarded;
-        else if (!empty($this->_httpForwardedFor))
+        } elseif (!empty($this->_httpForwardedFor)) {
             $sProxyIp = $this->_httpForwardedFor;
-        else if (!empty($this->_httpForwarded))
+        } elseif (!empty($this->_httpForwarded)) {
             $sProxyIp = $this->_httpForwarded;
-        else if (!empty($this->_httpVia))
+        } elseif (!empty($this->_httpVia)) {
             $sProxyIp = $this->_httpVia;
-        else if (!empty($this->_httpXComingFrom))
+        } elseif (!empty($this->_httpXComingFrom)) {
             $sProxyIp = $this->_httpXComingFrom;
-        else if (!empty($this->_httpComingFrom))
+        } elseif (!empty($this->_httpComingFrom)) {
             $sProxyIp = $this->_httpComingFrom;
+        }
 
         // Returns the true IP if it has been found, else ...
-        if (empty($sProxyIp))
-        {
+        if (empty($sProxyIp)) {
             // True IP without proxy
             return $sDirectIp;
-        }
-        else
-        {
+        } else {
             $blIsIp = preg_match('@^([0-9]{1,3}.){3,3}[0-9]{1,3}@', $sProxyIp, $aMatches);
 
-            if ($blIsIp && (count($aMatches) > 0))
-            {
+            if ($blIsIp && (count($aMatches) > 0)) {
                 // True IP behind a proxy
                 return $aMatches[0];
-            }
-            else
-            {
-                if (empty($this->_httpClientIp))
-                {
+            } else {
+                if (empty($this->_httpClientIp)) {
                     // Can't define IP: there is a proxy but we don't have
                     // information about the true IP
                     return "(unbekannt) " . $sProxyIp;
-                }
-                else
-                {
+                } else {
                     // better than nothing
                     return $this->_httpClientIp;
                 }
@@ -187,14 +179,14 @@ class d3usersonline extends oxbase
      */
     protected function _getIpData($sTargetVarName, $sDataName)
     {
-        if (empty($this->{$sTargetVarName}))
-        {
-            if (!empty($_SERVER) && isset($_SERVER[$sDataName]))
+        if (empty($this->{$sTargetVarName})) {
+            if (!empty($_SERVER) && isset($_SERVER[$sDataName])) {
                 $this->{$sTargetVarName} = $_SERVER[$sDataName];
-            else if (!empty($_ENV) && isset($_ENV[$sDataName]))
+            } elseif (!empty($_ENV) && isset($_ENV[$sDataName])) {
                 $this->{$sTargetVarName} = $_ENV[$sDataName];
-            else if (@getenv($sDataName))
+            } elseif (@getenv($sDataName)) {
                 $this->{$sTargetVarName} = getenv($sDataName);
+            }
         }
     }
 }

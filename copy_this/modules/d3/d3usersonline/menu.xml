@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<OX>
+    <OXMENU id="d3mxd3modules">
+        <MAINMENU id="d3mxusersonline">
+            <SUBMENU id="d3mxusersonline_settings" cl="d3_cfg_usersonline" list="d3_cfg_usersonline_list">
+                <TAB id="d3tbclussersonline_settings_main" cl="d3_cfg_usersonline_main" />
+                <TAB id="d3tbcl_licence" cl="d3_cfg_usersonline_licence" />
+            </SUBMENU>
+            <SUBMENU id="d3mxusersonline_analysis" cl="d3_usersonline" list="d3_usersonline_list">
+                <TAB id="d3tbclusersonline_currvisitors" cl="d3_usersonline_statistic" />
+            </SUBMENU>
+        </MAINMENU>
+    </OXMENU>
+</OX>

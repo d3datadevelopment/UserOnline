@@ -1,12 +1,25 @@
 * text=auto !eol
 copy_this/.noencode -text
+copy_this/modules/d3/d3usersonline/IntelliSenseHelper.php -text
+copy_this/modules/d3/d3usersonline/controllers/admin/d3_cfg_usersonline.php -text
+copy_this/modules/d3/d3usersonline/controllers/admin/d3_cfg_usersonline_licence.php -text
+copy_this/modules/d3/d3usersonline/controllers/admin/d3_cfg_usersonline_list.php -text
+copy_this/modules/d3/d3usersonline/controllers/admin/d3_cfg_usersonline_main.php -text
+copy_this/modules/d3/d3usersonline/controllers/admin/d3_usersonline.php -text
+copy_this/modules/d3/d3usersonline/controllers/admin/d3_usersonline_list.php -text
+copy_this/modules/d3/d3usersonline/controllers/admin/d3_usersonline_statistic.php -text
+copy_this/modules/d3/d3usersonline/menu.xml -text
 copy_this/modules/d3/d3usersonline/metadata.php -text
 copy_this/modules/d3/d3usersonline/models/d3usersonline.php -text
-copy_this/modules/d3/d3usersonline/models/d3usersonline_update.php -text
 copy_this/modules/d3/d3usersonline/modules/components/d3_oxcmp_utils_usersonline.php -text
 copy_this/modules/d3/d3usersonline/picture.png -text
+copy_this/modules/d3/d3usersonline/setup/d3usersonline_update.php -text
 copy_this/modules/d3/d3usersonline/translations/de/d3usersonline_lang.php -text
 copy_this/modules/d3/d3usersonline/translations/en/d3usersonline_lang.php -text
+copy_this/modules/d3/d3usersonline/views/admin/de/d3usersonline_lang.php -text
+copy_this/modules/d3/d3usersonline/views/admin/en/d3usersonline_lang.php -text
+copy_this/modules/d3/d3usersonline/views/admin/tpl/d3_cfg_usersonline_main.tpl -text
+copy_this/modules/d3/d3usersonline/views/admin/tpl/d3_usersonline_statistic.tpl -text
 copy_this/modules/d3/d3usersonline/views/blocks/layout/d3usersonline_sidebar.tpl -text
 setup+doku/Installation.pdf -text
 setup+doku/changelog.txt -text

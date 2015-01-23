@@ -1,4 +1,5 @@
-[{d3modcfgcheck modid="d3usersonline"}]
+[{d3modcfgcheck modid="d3usersonline"}][{/d3modcfgcheck}]
+[{if $mod_d3usersonline}]
     [{if $oxcmp_user && $oxcmp_user->getFieldData('oxrights') == 'malladmin'}]
         <div class="box">
             <h3>[{oxmultilang ident="D3_USERSONLINE_USERSONLINE"}]</h3>
@@ -44,6 +45,6 @@
             </div>
         </div>
     [{/if}]
-[{/d3modcfgcheck}]
+[{/if}]
 
 [{$smarty.block.parent}]
