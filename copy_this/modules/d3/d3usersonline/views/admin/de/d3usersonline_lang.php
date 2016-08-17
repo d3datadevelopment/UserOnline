@@ -25,7 +25,7 @@ $iLangNr   = 0;
 $aLang = array(
     'charset'                      => 'ISO-8859-15',
 
-    'd3mxusersonline'                   => 'Benutzer online',
+    'd3mxusersonline'                   => '<i class="fa fa-bar-chart"></i> Benutzer online',
     'd3mxusersonline_settings'          => 'Einstellungen',
     'd3tbclussersonline_settings_main'  => 'Grundeinstellungen',
     'd3mxusersonline_analysis'          => 'Auswertungen',
@@ -35,4 +35,5 @@ $aLang = array(
     'D3_USERSONLINE_USER'               => 'Benutzer',
     'D3_USERSONLINE_USERS'              => 'Benutzer',
     'D3_USERSONLINE_ALL'                => 'gesamt',
+    'D3_USERSONLINE_SAVE'               => 'Speichern',
 );

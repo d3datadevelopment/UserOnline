@@ -33,9 +33,13 @@ DQ9';
     public $sRequirements = '';
     public $sBaseValue = '';
 
+    public $sMinModCfgVersion = '4.3.7.0';
+
     protected $_aUpdateMethods = array(
         array('check' => 'checkUsersOnlineTableExist',
               'do'    => 'updateUsersOnlineTableExist'),
+        array('check' => 'checkUsersOnlineTableEngine',
+              'do'    => 'updateUsersOnlineTableEngine'),
         array('check' => 'checkRenameFields',
               'do'    => 'fixRenameFields'),
         array('check' => 'checkDeleteFields',
@@ -162,9 +166,36 @@ DQ9';
         $blRet = true;
 
         if ($this->checkUsersOnlineTableExist()) {
-            $blRet = $this->_addTable2('d3usersonline', $this->aFields, $this->aIndizes, 'users online', 'MyISAM');
+            $blRet = $this->_addTable2('d3usersonline', $this->aFields, $this->aIndizes, 'users online', 'InnoDB');
         }
 
+        return $blRet;
+    }
+
+    /**
+     * @return bool true, if table has wrong engine
+     */
+    public function checkUsersOnlineTableEngine()
+    {
+        /** @var d3installdbtable $oDbTable */
+        $oDbTable = oxNew('d3installdbtable', $this);
+        $aData = $oDbTable->getTableData('d3usersonline');
+
+        if (isset($aData) && count($aData) && isset($aData['ENGINE']) && $aData['ENGINE'] == 'InnoDB') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return bool
+     */
+    public function updateUsersOnlineTableEngine()
+    {
+        /** @var d3installdbtable $oDbTable */
+        $oDbTable = oxNew('d3installdbtable', $this);
+        $blRet = $oDbTable->changeTableEngine('d3usersonline', 'InnoDB');
         return $blRet;
     }
 

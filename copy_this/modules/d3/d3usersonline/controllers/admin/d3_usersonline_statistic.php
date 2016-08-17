@@ -17,6 +17,10 @@ class d3_usersonline_statistic extends d3_cfg_mod_main
     protected $_iExpTime = 600; // (in seconds)
     protected $_sThisTemplate = 'd3_usersonline_statistic.tpl';
 
+    protected $_sMenuItemTitle = 'd3mxusersonline';
+
+    protected $_sMenuSubItemTitle = 'd3mxusersonline_analysis';
+
     /**
      * @return array
      */

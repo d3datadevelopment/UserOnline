@@ -128,7 +128,7 @@
                             <td class="edittext ext_edittext" align="left">
                                 <br>
                                 <span class="d3modcfg_btn icon status_ok">
-                                    <input type="submit" name="save" value="[{oxmultilang ident="D3_INQUIRY_MAIN_SAVE"}]">
+                                    <input type="submit" name="save" value="[{oxmultilang ident="D3_USERSONLINE_SAVE"}]">
                                     <span></span>
                                 </span>
                                 <br><br>
@@ -142,13 +142,3 @@
 </form>
 
 [{include file="d3_cfg_mod_inc.tpl"}]
-
-<script type="text/javascript">
-    if (parent.parent) {
-        parent.parent.sShopTitle = "[{$actshopobj->oxshops__oxname->getRawValue()|oxaddslashes}]";
-        parent.parent.sMenuItem = "[{oxmultilang ident="d3mxusersonline"}]";
-        parent.parent.sMenuSubItem = "[{oxmultilang ident="d3mxusersonline_settings"}]";
-        parent.parent.sWorkArea = "[{$_act}]";
-        parent.parent.setTitle();
-    }
-</script>

@@ -143,7 +143,7 @@ class requConfig
                 'aParams' => array(
                     'id'      => 'd3modcfg_lib',
                     'name'    => 'Modul-Connector',
-                    'version' => '4.3.1.0',
+                    'version' => '4.3.7.0',
                 ),
             ),
         ),
