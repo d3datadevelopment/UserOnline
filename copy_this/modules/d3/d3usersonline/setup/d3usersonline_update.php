@@ -111,6 +111,14 @@ DQ9';
                 'OXCLASS' => 'OXCLASS',
             ),
         ),
+        'TIMEVISIT' => array(
+            'sTableName' => 'd3usersonline',
+            'sType'      => '',
+            'sName'      => 'TIMEVISIT',
+            'aFields'    => array(
+                'TIMEVISIT' => 'TIMEVISIT',
+            ),
+        ),
     );
 
     public $aRenameFields = array(
