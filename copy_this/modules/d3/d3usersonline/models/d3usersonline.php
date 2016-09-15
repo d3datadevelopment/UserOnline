@@ -32,6 +32,8 @@ class d3usersonline extends oxbase
     protected $_httpXComingFrom = null;
     protected $_httpComingFrom = null;
 
+    protected $_iDeleteThreshold = 30; // Zeitdifferenz für Löschaufträge
+
     /**
      * constructor
      */
@@ -48,8 +50,15 @@ class d3usersonline extends oxbase
     {
         startProfile(__METHOD__);
 
-        $iExptime = time() - $iExpTime;
-        oxDb::getDb()->Execute("delete from ".$this->getViewName()." where timevisit < $iExptime");
+        $iTime = time();
+        $iLastDeleteTime = oxRegistry::getConfig()->getShopConfVar('iLastDeleteTime', null, 'd3usersonline');
+
+        if ($iTime > $iLastDeleteTime + $this->_iDeleteThreshold) {
+            $iExptime = $iTime - $iExpTime;
+            oxDb::getDb()->Execute("delete from " . $this->getViewName() . " where timevisit < $iExptime");
+
+            oxRegistry::getConfig()->saveShopConfVar('int', 'iLastDeleteTime', $iTime, null, 'd3usersonline');
+        }
 
         stopProfile(__METHOD__);
     }
@@ -63,7 +72,7 @@ class d3usersonline extends oxbase
 
         $sSelect = "select count(oxid) AS counter, oxclass from ".
             $this->getViewName()." GROUP BY oxclass ORDER BY counter desc";
-        $aRecords = oxDb::getDb(oxDb::FETCH_MODE_ASSOC)->getArray($sSelect);
+        $aRecords = oxDb::getDb(oxDb::FETCH_MODE_ASSOC)->getAll($sSelect);
 
         $iAllCounter = 0;
         $aUserClasses = array();
