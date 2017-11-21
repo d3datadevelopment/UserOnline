@@ -39,6 +39,10 @@
 
 <style type="text/css">
     <!--
+    div.box h3 {
+        margin-top: 20px;
+    }
+
     fieldset {
         border:           1px inset black;
         background-color: #F0F0F0;
@@ -98,12 +102,14 @@
     <input type="hidden" name="cl" value="[{$oViewConf->getActiveClassName()}]">
     <input type="hidden" name="actshop" value="[{$shop->id}]">
     <input type="hidden" name="editlanguage" value="[{$editlanguage}]">
+    <input type="hidden" id="groupbyclass" name="groupbyclass" value="false">
 </form>
 
 [{d3modcfgcheck modid="d3usersonline"}][{/d3modcfgcheck}]
 [{if $mod_d3usersonline}]
     [{assign var="aUsersOnline" value=$oView->getUserCount()}]
-        <h3>[{oxmultilang ident="D3_USERSONLINE_USERSONLINE"}]</h3>
+    <input id="groupbyclasscheckbox" value="1" type="checkbox" [{if $blGroupByClass}]checked[{/if}] onchange="document.getElementById('groupbyclass').value = this.checked; document.getElementById('transfer').submit();"> <label for="groupbyclasscheckbox">[{oxmultilang ident="D3_USERSONLINE_GROUPBYCLASS"}]</label>
+    <h3>[{oxmultilang ident="D3_USERSONLINE_USERSONLINE"}]</h3>
         <div class="content">
             <table style="border-style: none; width: 100%;">
                 <tr>
@@ -125,10 +131,14 @@
                     <tr>
                         <td>
                             [{if $aClassUser->classname}]
-                                [{$aClassUser->classname|ucfirst}]:
+                                [{$oView->getControllerTitle($aClassUser->classname)}]
                             [{else}]
-                                undefined:
+                                undefined
                             [{/if}]
+                            [{if $aClassUser->page}]
+                                "[{$aClassUser->page}]"
+                            [{/if}]
+                            :
                         </td>
                         <td style="text-align: right; font-weight: bold;">
                             [{$aClassUser->counter}]&nbsp;
@@ -149,13 +159,3 @@
 [{/if}]
 
 [{include file="d3_cfg_mod_inc.tpl"}]
-
-<script type="text/javascript">
-    if (parent.parent) {
-        parent.parent.sShopTitle = "[{$actshopobj->oxshops__oxname->getRawValue()|oxaddslashes}]";
-        parent.parent.sMenuItem = "[{oxmultilang ident="d3mxusersonline"}]";
-        parent.parent.sMenuSubItem = "[{oxmultilang ident="d3mxusersonline_settings"}]";
-        parent.parent.sWorkArea = "[{$_act}]";
-        parent.parent.setTitle();
-    }
-</script>

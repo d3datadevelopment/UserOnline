@@ -14,8 +14,20 @@
 class d3_usersonline_statistic extends d3_cfg_mod_main
 {
     protected $_blUseOwnOxid = false;
-    protected $_iExpTime = 600; // (in seconds)
     protected $_sThisTemplate = 'd3_usersonline_statistic.tpl';
+
+    protected $_sMenuItemTitle = 'd3mxusersonline';
+
+    protected $_sMenuSubItemTitle = 'd3mxusersonline_analysis';
+
+    public $blGroupByClass = false;
+
+    public function render()
+    {
+        $this->blGroupByClass = oxRegistry::getConfig()->getRequestParameter('groupbyclass') == 'true';
+        $this->addTplParam('blGroupByClass', $this->blGroupByClass);
+        return parent::render();
+    }
 
     /**
      * @return array
@@ -24,7 +36,34 @@ class d3_usersonline_statistic extends d3_cfg_mod_main
     {
         /** @var d3usersonline $oUsersOnline */
         $oUsersOnline = oxNew('d3usersonline');
-        $oUsersOnline->clearOldItems($this->_iExpTime);
-        return $oUsersOnline->getUserCount();
+        $oUsersOnline->clearOldItems();
+        return $oUsersOnline->getUserCount($this->blGroupByClass);
+    }
+
+    public function getControllerTitle($sControllerIdent)
+    {
+        $oLang = oxRegistry::getLang();
+        $sTranslationIdent = 'D3_USERSONLINE_CLASS_'.strtoupper($sControllerIdent);
+        $sTranslation = $oLang->translateString(
+            $sTranslationIdent,
+            null,
+            false
+        );
+
+        if ($sTranslation !== $sTranslationIdent) {
+            return $sTranslation;
+        } else {
+            $sTranslationIdent = 'PAGE_TITLE_'.strtoupper($sControllerIdent);
+            $sTranslation = $oLang->translateString(
+                $sTranslationIdent,
+                null,
+                true
+            );
+            if ($sTranslation !== $sTranslationIdent) {
+                return $sTranslation;
+            }
+        }
+
+        return ucfirst($sControllerIdent);
     }
 }

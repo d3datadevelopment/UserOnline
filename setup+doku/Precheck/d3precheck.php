@@ -43,7 +43,7 @@ class requConfig
 
     public $sModId   = 'd3usersonline';
 
-    public $sModVersion = '2.0.1.1';
+    public $sModVersion = '2.1.0.0';
 
     /********************** check configuration section ************************/
 
@@ -68,7 +68,7 @@ class requConfig
         'hasFromToPhpVersion'    => array(
             'blExec'  => 1,
             'aParams' => array(
-                'from' => '5.2.0',
+                'from' => '5.3.0',
                 'to'   => '5.6.200',
             )
         ),
@@ -83,7 +83,12 @@ class requConfig
             'blExec' => 0,
         ),
 
-        // benötigt PHP-Extension (kaskadierbar (siehe "Desc1"))
+        // benötigt Zend Decoder oder IonCubeLoader
+        'hasIonCubeOrZendLoader'       => array(
+            'blExec' => 1,
+        ),
+
+        // benötigte PHP-Extension (kaskadierbar (siehe "Desc1"))
         'hasExtension'           => array(
             array(
                 'blExec'  => 0,
@@ -99,13 +104,29 @@ class requConfig
             ),
         ),
 
+        // benötigte cURL-Version
+        'hasMinCurlVersion'           => array(
+            'blExec'  => 0,
+            'aParams' => array(
+                'version' => '7.26.0',
+            ),
+        ),
+
+        // benötigte OpenSSL-Version (Angabe in Versionsformat)
+        'hasMinOpenSSLVersion'           => array(
+            'blExec'  => 0,
+            'aParams' => array(
+                'version' => '1.0.1.5',
+            ),
+        ),
+
         // minimal benötigte Shopversion (editionsgetrennt), wird (sofern möglich) Remote aktualisiert
         'hasMinShopVersion'      => array(
             'blExec'  => 1,
             'aParams' => array(
-                'PE' => '4.7.0',
-                'CE' => '4.7.0',
-                'EE' => '5.0.0'
+                'PE' => '4.9.0',
+                'CE' => '4.9.0',
+                'EE' => '5.2.0'
             ),
         ),
 
@@ -113,9 +134,9 @@ class requConfig
         'hasMaxShopVersion'      => array(
             'blExec'  => 1,
             'aParams' => array(
-                'PE' => '4.9.2',
-                'CE' => '4.9.2',
-                'EE' => '5.2.2'
+                'PE' => '4.10.5',
+                'CE' => '4.10.5',
+                'EE' => '5.3.5'
             ),
         ),
 
@@ -143,7 +164,7 @@ class requConfig
                 'aParams' => array(
                     'id'      => 'd3modcfg_lib',
                     'name'    => 'Modul-Connector',
-                    'version' => '4.3.1.0',
+                    'version' => '4.4.0.0',
                 ),
             ),
         ),
@@ -155,7 +176,7 @@ class requConfig
                 'aParams' => array(
                     'id'      => 'd3modcfg_lib',
                     'name'    => 'Modul-Connector',
-                    'version' => '4.3.1.0',
+                    'version' => '5.0.0.0',
                 ),
             ),
         ),
@@ -182,7 +203,7 @@ date_default_timezone_set('Europe/Berlin');
  */
 class requCheck
 {
-    public $sVersion = '4.3';
+    public $sVersion = '4.10.2';
 
     protected $_db = false;
 
@@ -201,6 +222,8 @@ class requCheck
     public $oLayout;
 
     protected $_sInFolderFileName = 'd3precheckinfolder.php';
+
+    public $sVersionTag = '@@version@@';
 
     /********************** functional section ************************/
 
@@ -285,18 +308,40 @@ class requCheck
         $aIgnoreDirItems = array('.', '..');
         $aCheckScripts = array();
 
-        /** @var SplFileInfo $oFileInfo */
-        foreach (new RecursiveDirectoryIterator($sFolder) as $oFileInfo) {
-            if (!in_array($oFileInfo->getFileName(), $aIgnoreDirItems) && $oFileInfo->isDir()) {
-                $aCheckScripts = array_merge($aCheckScripts, $this->_walkThroughDirs($oFileInfo->getRealPath()));
-            } elseif ($oFileInfo->isFile()) {
-                if (strtolower($oFileInfo->getFilename()) == $this->_sInFolderFileName) {
-                    $aCheckScripts[] = str_replace('\\', '/', $oFileInfo->getRealPath());
+        try {
+            /** @var SplFileInfo $oFileInfo */
+            $oIterator = new RecursiveDirectoryIterator($sFolder);
+        
+            foreach ($oIterator as $oFileInfo) {
+                if (in_array($oFileInfo->getFileName(), $aIgnoreDirItems)) {
+                    continue;
+                }
+                if ($oFileInfo->isDir()) {
+                    $aCheckScripts = array_merge($aCheckScripts, $this->_walkThroughDirs($oFileInfo->getRealPath()));
+                } elseif ($oFileInfo->isFile()) {
+                    if (strtolower($oFileInfo->getFilename()) == $this->_sInFolderFileName) {
+                        $aCheckScripts[] = str_replace('\\', '/', $oFileInfo->getRealPath());
+                    }
                 }
             }
+        } catch (UnexpectedValueException $oEx) {
+            sprintf($this->oLayout->translate('unableExecuteDirectoryIterator'), $oEx->getMessage());
+            $this->addMessage(
+                sprintf($this->oLayout->translate('unableExecuteDirectoryIterator'), $oEx->getMessage())
+            );
         }
 
         return $aCheckScripts;
+    }
+    
+    public function addMessage($sMessage)
+    {
+        $this->aMessages[md5($sMessage)] = $sMessage;
+    }
+    
+    public function getMessages()
+    {
+        return $this->aMessages;
     }
 
     /**
@@ -317,15 +362,26 @@ class requCheck
                 $aArguments
             );
 
+            $sVersionUrl = $this->_getFolderCheckUrl(
+                $sScriptPath,
+                'getVersion',
+                array()
+            );
+
             $sContent = serialize(null);
+            $sVersion = serialize(null);
 
             if ($this->_hasCurl()) {
                 $sContent = $this->_getContentByCurl($sUrl);
+                $sVersion = $this->_getContentByCurl($sVersionUrl);
             } elseif ($this->_hasAllowUrlFopen()) {
                 $sContent = file_get_contents($sUrl);
+                $sVersion = file_get_contents($sVersionUrl);
             }
 
-            $aReturn[$this->getBasePath($sScriptPath)] = unserialize($sContent);
+            $sBasePath = $this->getBasePath($sScriptPath);
+            $aReturn[$sBasePath] = unserialize($sContent);
+            $aReturn[$this->sVersionTag][$sBasePath] = unserialize($sVersion);
         }
 
         return $aReturn;
@@ -362,15 +418,17 @@ class requCheck
      */
     protected function _getContentByCurl($sUrl)
     {
+        $iTimeOut = 5;
         $ch = curl_init();
         $sCurl_URL = preg_replace('@^((http|https)://)@', '', $sUrl);
+
         curl_setopt($ch, CURLOPT_URL, $sCurl_URL);
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $iTimeOut);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $iTimeOut);
         curl_setopt($ch, CURLOPT_POST, 0);
         $sContent = curl_exec($ch);
         curl_close($ch);
@@ -431,14 +489,22 @@ class requCheck
     }
 
     /**
-     * @param $aResult
+     * @return string
+     */
+    public function getVersion()
+    {
+        return $this->sVersion;
+    }
+
+    /**
+     * @param $mResult
      *
      * @return bool
      */
-    protected function _hasFalseInResult($aResult)
+    protected function _hasFalseInResult($mResult)
     {
-        if (is_array($aResult)) {
-            foreach ($aResult as $blResult) {
+        if (is_array($mResult)) {
+            foreach ($mResult as $blResult) {
                 if (false === $blResult) {
                     $this->blGlobalResult = false;
 
@@ -449,22 +515,24 @@ class requCheck
             return false;
         }
 
-        if (false === $aResult) {
+        if (false === $mResult) {
             $this->blGlobalResult = false;
+
+            return true;
         }
 
-        return !$aResult;
+        return false;
     }
 
     /**
-     * @param $aResult
+     * @param $mResult
      *
      * @return bool
      */
-    protected function _hasNullInResult($aResult)
+    protected function _hasNullInResult($mResult)
     {
-        if (is_array($aResult)) {
-            foreach ($aResult as $blResult) {
+        if (is_array($mResult)) {
+            foreach ($mResult as $blResult) {
                 if ($blResult === null) {
                     $this->blGlobalResult = false;
 
@@ -475,22 +543,23 @@ class requCheck
             return false;
         }
 
-        if ($aResult === null) {
+        if ($mResult === null) {
             $this->blGlobalResult = false;
+            return true;
         }
 
-        return !$aResult;
+        return false;
     }
 
     /**
-     * @param $aResult
+     * @param $mResult
      *
      * @return bool
      */
-    protected function _hasNoticeInResult($aResult)
+    protected function _hasNoticeInResult($mResult)
     {
-        if (is_array($aResult)) {
-            foreach ($aResult as $blResult) {
+        if (is_array($mResult)) {
+            foreach ($mResult as $blResult) {
                 if ($blResult === 'notice') {
                     return true;
                 }
@@ -499,7 +568,7 @@ class requCheck
             return false;
         }
 
-        if ($aResult === 'notice') {
+        if ($mResult === 'notice') {
             return true;
         }
 
@@ -538,8 +607,8 @@ class requCheck
         if (!$this->_db) {
             if (file_exists('config.inc.php')) {
                 require_once('config.inc.php');
-                $this->_db = mysql_connect($this->dbHost, $this->dbUser, $this->dbPwd);
-                mysql_select_db($this->dbName, $this->_db);
+                ini_set('error_reporting', E_ALL^E_NOTICE);
+                $this->_db = mysqli_connect($this->dbHost, $this->dbUser, $this->dbPwd, $this->dbName);
             }
         }
 
@@ -627,7 +696,6 @@ class requCheck
     {
         $sGenCheckType = preg_replace("@(\_[0-9]$)@", "", $sCheckType);
         $oTests = new requTests($this, $this->oConfig, $this->getDb(), $this->oRemote);
-
         if (method_exists($oTests, $sGenCheckType)) {
             $this->_checkResult($oTests, $sGenCheckType, $sCheckType, $aConfiguration);
         } else {
@@ -644,17 +712,17 @@ class requCheck
      */
     protected function _checkResult($oTests, $sGenCheckType, $sCheckType, $aConfiguration)
     {
-            $aResult = $oTests->{$sGenCheckType}($aConfiguration);
+            $mResult = $oTests->{$sGenCheckType}($aConfiguration);
             $sElementId = (md5($sGenCheckType . serialize($aConfiguration)));
 
-            if ($this->_hasNoticeInResult($aResult)) {
-                $this->oLayout->getUnknownItem($aResult, $sElementId, $sCheckType, $aConfiguration);
-            } elseif ($this->_hasNullInResult($aResult)) {
-                $this->oLayout->getUnknownItem($aResult, $sElementId, $sCheckType, $aConfiguration);
-            } elseif ($this->_hasFalseInResult($aResult)) {
-                $this->oLayout->getNoSuccessItem($aResult, $sElementId, $sCheckType, $aConfiguration);
+            if ($this->_hasNoticeInResult($mResult)) {
+                $this->oLayout->getUnknownItem($mResult, $sElementId, $sCheckType, $aConfiguration);
+            } elseif ($this->_hasNullInResult($mResult)) {
+                $this->oLayout->getUnknownItem($mResult, $sElementId, $sCheckType, $aConfiguration);
+            } elseif ($this->_hasFalseInResult($mResult)) {
+                $this->oLayout->getNoSuccessItem($mResult, $sElementId, $sCheckType, $aConfiguration);
             } else {
-                $this->oLayout->getSuccessItem($aResult, $sElementId, $sCheckType, $aConfiguration);
+                $this->oLayout->getSuccessItem($mResult, $sElementId, $sCheckType, $aConfiguration);
             }
     }
 
@@ -696,11 +764,26 @@ class requLayout
                     <title>
                         $sTranslRequCheck "$sModName" $sModVersion
                     </title>
+                    <meta http-equiv="Content-Type" content="text/html;charset=ISO8859-15">
                     <style type="text/css">
                         <!--
                         body {
                             background: #FFF url($sScriptName?fnc=getGifBg) repeat-x;
                             font: 13px Trebuchet MS,Tahoma,Verdana,Arial,Helvetica,sans-serif;
+                        }
+                        div.langswitch {
+                            clear: both;
+                            float: none;
+                            height: 13px;
+                            margin: 10px 0 25px;
+                        }
+                        .langswitch a {
+                            text-decoration: none;
+                            margin-right: 5px;
+                            width: 18px;
+                            height: 13px;
+                            display: block;
+                            float: left;
                         }
                         .btn_1 {
                             background: url($sScriptName?fnc=getPngButton) no-repeat scroll right 0;
@@ -723,8 +806,17 @@ class requLayout
                         }
                         .box_warning a, .box_ok a {font-weight: bold; color: white;}
                         .squ_bullet {
-                            float: left; height: 10px; width: 10px; border: 1px solid black;
-                            margin: 0 5px 0 50px;  display: inline-block;
+                            float: left;
+                            height: 10px;
+                            width: 5px;
+                            border: 1px solid black;
+                            margin: 0 5px 0 50px;
+                            display: inline-block;
+                            font-size: 11px;
+                            color: white;
+                            padding: 0 3px;
+                            line-height: 10px;
+                            cursor: pointer;
                         }
                         .squ_toggle {
                             font-size: 15px; line-height: 0.5; cursor: pointer; float: left;
@@ -732,39 +824,93 @@ class requLayout
                             margin: 0 5px 0 3px;  display: inline-block;
                         }
                         .squ_desc {
-                            position: relative; font-size: 11px; line-height: 1; cursor: help;
-                            height: 10px; width: 5px; padding: 0 3px; border: 1px solid black;
-                            margin: 0 5px 0 3px;  display: inline-block;
+                            position: relative;
+                            font-size: 11px;
+                            line-height: 10px;
+                            cursor: help;
+                            height: 10px;
+                            width: 5px;
+                            padding: 0 3px;
+                            border: 1px solid black;
+                            margin: 0 5px 0 3px;
+                            display: inline-block;
                         }
                         .squ_desc div {
-                            font-size: 13px; background-color: white; border: 1px solid black;
-                            box-shadow: 4px 3px 7px #c9c9c9; display: none; left: 30px;
-                            padding: 20px; position: absolute; top: -25px; width: 400px;
+                            font-size: 13px;
+                            background-color: white;
+                            border: 1px solid black;
+                            box-shadow: 4px 3px 7px #c9c9c9;
+                            display: none;
+                            left: 0;
+                            padding: 20px;
+                            position: absolute;
+                            top: -25px;
+                            width: 400px;
                             z-index: 2500;
                         }
-                        .squ_desc:hover div {display: block;}
+                        .squ_desc li {
+                            line-height: normal;
+                        }
+                        .squ_desc:hover div,
+                        .squ_desc div:hover {
+                            display: block;
+                            margin-left: 30px;
+                        }
+                        .squ_desc div.hoverhelper {
+                            background: transparent none repeat scroll 0 0;
+                            border: medium none;
+                            box-shadow: none;
+                            margin-left: 0;
+                            width: 0;
+                            padding: 0 0 150px 30px;
+                        }
                         .squ_desc:hover div div {
-                            display: inline-block; position: unset; border: none; box-shadow: none;
-                            padding: 0; margin: 5px 0; line-height: normal;
+                            display: inline-block;
+                            position: unset;
+                            border: none;
+                            box-shadow: none;
+                            padding: 0;
+                            margin: 5px 0;
+                            line-height: normal;
                         }
                         .squ_desc:hover div div.squ_bullet {
                             border: 1px solid black; display: inline-block; padding: 0; position: unset; width: 10px;
                             margin: 0 5px; box-shadow: none;
                         }
-                        .desc_box {width: 400px; position: absolute; left: 400px;}
+                        .desc_box {
+                            width: 400px;
+                            position: absolute;
+                            left: 400px;
+                        }
+                        .note {
+                            color: gray;
+                            font-size: 10px;
+                        }
+                        .messages {
+                            display: block; 
+                            margin: 13px 0; 
+                            text-align: center; 
+                            background-color: orange; 
+                            border: 1px solid black; 
+                            color: black; 
+                            font-weight: normal; 
+                            padding: 1px;
+                        }
                         -->
                     </style>
                 </head>
                 <body>
-                    <a href="http://www.oxidmodule.com/">
-                        <img id="logo" src="$sScriptName?fnc=getPngLogo">
+                    <a id="logo" href="http://www.oxidmodule.com/">
+                        <img src="$sScriptName?fnc=getPngLogo">
                     </a>
-                    <a href="$sScriptName?lang=de">
-                        <img src="$sScriptName?fnc=getGifDe">
-                    </a>
-                    <a href="$sScriptName?lang=en">
-                        <img src="$sScriptName?fnc=getGifEn">
-                    </a>
+                    <div class="langswitch">
+                        <a href="$sScriptName?lang=de">
+                            <img src="$sScriptName?fnc=getGifDe">
+                        </a>
+                        <a href="$sScriptName?lang=en">
+                            <img src="$sScriptName?fnc=getGifEn">
+                        </a>
+                    </div>
 EOT;
         echo "<h3>" . $this->translate('RequCheck') . ' "' . $this->oConfig->sModName . ' ' . $sModVersion . '"</h3>';
         echo '<p>' . $this->translate('ExecNotice') . '</p>' . PHP_EOL;
@@ -777,6 +923,14 @@ EOT;
         $sScriptName        = $_SERVER['SCRIPT_NAME'];
         $sTranslShopPhpInfo = $this->translate('showPhpInfo');
         $sTranslDependent   = $this->translate('dependentoffurther');
+        
+        if (count($this->oBase->getMessages())) {
+            echo '<span class="messages"><ul>';
+            foreach ($this->oBase->getMessages() as $sMessage) {
+                echo '<li>'.$sMessage.'</li>';
+            }
+            echo '</ul></span>';
+        }
 
         if ($this->oBase->blGlobalResult) {
             echo '<p class="box_ok"><b>' . $this->translate('globalSuccess') . '</b>' .
@@ -808,18 +962,48 @@ EOT;
 
     /**
      * @param $aResult
+     *
+     * @return bool
+     */
+    protected function hasRemoteVersionDiff($aResult)
+    {
+        $blDiff = false;
+
+        if (is_array($aResult)
+            && isset($aResult[$this->oBase->sVersionTag])
+            && is_array($aResult[$this->oBase->sVersionTag])
+        ) {
+            foreach ($aResult[$this->oBase->sVersionTag] as $sRemoteVersion) {
+                if (version_compare($sRemoteVersion, $this->oBase->getVersion(), '!=')) {
+                    $blDiff = true;
+                }
+            }
+        }
+
+        return $blDiff;
+    }
+
+    /**
+     * @param $aResult
      * @param $sElementId
      * @param $sCheckType
      * @param $aConfiguration
      */
     public function getNoSuccessItem($aResult, $sElementId, $sCheckType, $aConfiguration)
     {
-        echo "<div class='squ_bullet' style='background-color: red;' title='" .
-            $this->translate('RequNotSucc') . "'></div>" .
+        $sText = '';
+        $sDesc = '';
+        if ($this->hasRemoteVersionDiff($aResult)) {
+            $sText = '!';
+            $sDesc = strip_tags($this->translate('RemoteVersionDiff'));
+        }
+
+        echo '<div class="squ_bullet" style="background-color: red;" title="' .
+            $this->translate('RequNotSucc') . $sDesc . '">'.$sText.'</div>' .
             $this->_addToggleScript($aResult, $sElementId) .
             $this->translate($sCheckType, $aConfiguration) .
             $this->_addDescBox($sCheckType.'_DESC', $aConfiguration) .
-            "<br>" . PHP_EOL;
+            '<br>' . PHP_EOL;
 
         $this->getSubDirItems($aResult, $sElementId);
     }
@@ -832,12 +1016,19 @@ EOT;
      */
     public function getSuccessItem($aResult, $sElementId, $sCheckType, $aConfiguration)
     {
-        echo "<div class='squ_bullet' style='background-color: green;' title='" .
-            $this->translate('RequSucc') . "'></div>" .
+        $sText = '';
+        $sDesc = '';
+        if ($this->hasRemoteVersionDiff($aResult)) {
+            $sText = '!';
+            $sDesc = strip_tags($this->translate('RemoteVersionDiff'));
+        }
+
+        echo '<div class="squ_bullet" style="background-color: green;" title="' .
+            $this->translate('RequSucc') . $sDesc . '">'.$sText.'</div>' .
             $this->_addToggleScript($aResult, $sElementId) .
             $this->translate($sCheckType, $aConfiguration) .
             $this->_addDescBox($sCheckType.'_DESC', $aConfiguration) .
-            "<br>" . PHP_EOL;
+            '<br>' . PHP_EOL;
 
         $this->getSubDirItems($aResult, $sElementId);
     }
@@ -850,12 +1041,19 @@ EOT;
      */
     public function getUnknownItem($aResult, $sElementId, $sCheckType, $aConfiguration)
     {
-        echo "<div class='squ_bullet' style='background-color: orange;' title='" .
-            $this->translate('RequUnknown') . "'></div>" .
+        $sText = '';
+        $sDesc = '';
+        if ($this->hasRemoteVersionDiff($aResult)) {
+            $sText = '!';
+            $sDesc = strip_tags($this->translate('RemoteVersionDiff'));
+        }
+
+        echo '<div class="squ_bullet" style="background-color: orange;" title="' .
+            $this->translate('RequUnknown') . $sDesc . '">'.$sText.'</div>' .
             $this->_addToggleScript($aResult, $sElementId) .
             $this->translate($sCheckType, $aConfiguration) .
             $this->_addDescBox($sCheckType.'_DESC', $aConfiguration) .
-            "<br>" . PHP_EOL;
+            '<br>' . PHP_EOL;
 
         $this->getSubDirItems($aResult, $sElementId);
     }
@@ -866,11 +1064,11 @@ EOT;
      */
     public function getUncheckableItem($sCheckType, $aConfiguration)
     {
-        echo "<div class='squ_bullet' style='background-color: orange;' title='" .
-            $this->translate('RequNotCheckable') . "'></div>" .
-            $this->translate($sCheckType, $aConfiguration) . " (" . $this->translate('RequNotCheckable') . ")" .
+        echo '<div class="squ_bullet" style="background-color: orange;" title="' .
+            $this->translate('RequNotCheckable') . '"></div>' .
+            $this->translate($sCheckType, $aConfiguration) . ' (' . $this->translate('RequNotCheckable') . ')' .
             $this->_addDescBox($sCheckType.'_DESC', $aConfiguration) .
-            "<br>" . PHP_EOL;
+            '<br>' . PHP_EOL;
     }
 
     /**
@@ -880,20 +1078,33 @@ EOT;
     public function getSubDirItems($aResult, $sElementId)
     {
         if (is_array($aResult) && count($aResult)) {
-            echo "<div style='margin-left: 20px; display: none;' id='" . $sElementId . "'>";
+            echo '<div style="margin-left: 20px; display: none;" id="' . $sElementId . '">';
             foreach ($aResult as $sPath => $blResult) {
-                if (false === $blResult) {
-                    echo "<div class='squ_bullet' style='background-color: red;' title='" .
-                        $this->translate('RequNotSucc') . "'></div>" . $sPath . "<br>";
-                } elseif (null === $blResult) {
-                    echo "<div class='squ_bullet' style='background-color: orange;' title='" .
-                        $this->translate('RequUnknown') . "'></div>" . $sPath . "<br>";
-                } else {
-                    echo "<div class='squ_bullet' style='background-color: green;' title='" .
-                        $this->translate('RequSucc') . "'></div>" . $sPath . "<br>";
+                if ($sPath != $this->oBase->sVersionTag) {
+                    $sText = '';
+                    $sDesc = '';
+                    if (is_array($aResult[$this->oBase->sVersionTag]) && isset($aResult[$this->oBase->sVersionTag][$sPath])) {
+                        $blDiff = version_compare($aResult[$this->oBase->sVersionTag][$sPath], $this->oBase->getVersion(), '!=');
+                        $sText = $blDiff ? '!' : '';
+                        $sDesc = $blDiff ? $this->translate('RemoteVersionDiff') : '';
+                    }
+
+                    if (false === $blResult) {
+                        echo '<div class="squ_bullet" style="background-color: red;" title="' .
+                            $this->translate('RequNotSucc') . strip_tags($sDesc) . '">'.
+                            $sText.'</div>' . $sPath . $sDesc . '<br>';
+                    } elseif (null === $blResult) {
+                        echo '<div class="squ_bullet" style="background-color: orange;" title="' .
+                            $this->translate('RequUnknown') . strip_tags($sDesc) . '">'.
+                            $sText.'</div>' . $sPath . $sDesc . '<br>';
+                    } else {
+                        echo '<div class="squ_bullet" style="background-color: green;" title="' .
+                            $this->translate('RequSucc') . strip_tags($sDesc) . '">'.
+                            $sText.'</div>' . $sPath . $sDesc . '<br>';
+                    }
                 }
             }
-            echo "</div>" . PHP_EOL;
+            echo '</div>' . PHP_EOL;
         }
     }
 
@@ -929,6 +1140,7 @@ EOT;
     protected function _addDescBox($sTextIdent, $aConfiguration)
     {
         $sContent = "<div class='squ_desc'>?".
+                "<div class='hoverhelper'></div>".
                 "<div>".$this->translate($sTextIdent, $aConfiguration)."</div>".
             "</div>";
 
@@ -1116,7 +1328,7 @@ class requTranslations
                     'Ihres Shops aus. Nur dann k&ouml;nnen die Pr&uuml;fungen erfolgreich durchgef&uuml;hrt werden.',
                 'RequSucc'               => 'Bedingung erf&uuml;llt',
                 'RequNotSucc'            => 'Bedingung nicht erf&uuml;llt',
-                'RequUnknown'            => 'Bedingung nicht pr&uuml;fbar',
+                'RequUnknown'            => 'Bedingung unklar, siehe Hinweise im Hilfetext',
                 'RequNotCheckable'       => 'Bedingung nicht pr&uuml;fbar',
                 'hasMinPhpVersion'       => 'mindestens PHP Version %1$s',
                 'hasMinPhpVersion_DESC'  => '<div>Das Modul erfordert eine PHP-Version die nicht kleiner ist '.
@@ -1125,12 +1337,14 @@ class requTranslations
                     'ist auf Ihrem Server aktiv.</div>'.
                     '<div><div class="squ_bullet" style="background-color: red;"></div> Das Modul kann in '.
                     'PHP-Versionen kleiner als %1$s nicht ausgef&uuml;hrt werden. Fragen Sie Ihren Serverprovider '.
-                    'nach der Anpassung der PHP-Installation.</div>'.
+                    'nach der Anpassung der PHP-Installation oder kontaktieren Sie uns f&uuml;r eine alternative '.
+                    'Modulversion.</div>'.
                     '<div>&Uuml;ber den [+]-Button k&ouml;nnen Sie Ergebnisse zu den getesteten Verzeichnissen '.
                     'abrufen. Je nach Servereinstellung k&ouml;nnen die Ergebnisse abweichen. Nur die rot markierten '.
                     'Verzeichnisse erfordern eine Anpassung.</div>'.
-                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen".'.
-                    '</div>',
+                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen". '.
+                    'Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'hasMaxPhpVersion'       => 'maximal PHP Version %1$s',
                 'hasMaxPhpVersion_DESC'  => '<div>Das Modul erfordert eine PHP-Version die nicht h&ouml;her ist '.
                     'als %1$s.</div>'.
@@ -1138,24 +1352,28 @@ class requTranslations
                     'ist auf Ihrem Server aktiv.</div>'.
                     '<div><div class="squ_bullet" style="background-color: red;"></div> Das Modul kann in '.
                     'PHP-Versionen h&ouml;her als %1$s nicht ausgef&uuml;hrt werden. Fragen Sie Ihren Serverprovider '.
-                    'nach der Anpassung der PHP-Installation.</div>'.
+                    'nach der Anpassung der PHP-Installation oder kontaktieren Sie uns f&uuml;r eine alternative '.
+                    'Modulversion.</div>'.
                     '<div>&Uuml;ber den [+]-Button k&ouml;nnen Sie Ergebnisse zu den getesteten Verzeichnissen '.
                     'abrufen. Je nach Servereinstellung k&ouml;nnen die Ergebnisse abweichen. Nur die rot markierten '.
                     'Verzeichnisse erfordern eine Anpassung.</div>'.
-                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen".'.
-                    '</div>',
+                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen". '.
+                    'Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'hasFromToPhpVersion'    => 'Server verwendet PHP Version zwischen %1$s und %2$s',
                 'hasFromToPhpVersion_DESC' => '<div>Das Modul erfordert eine PHP-Version zwischen %1$s und %2$s.</div>'.
                     '<div><div class="squ_bullet" style="background-color: green;"></div> Die passende PHP-Version '.
                     'ist auf Ihrem Server aktiv.</div>'.
                     '<div><div class="squ_bullet" style="background-color: red;"></div> Das Modul kann '.
                     'au&szlig;erhalb der PHP-Versionen nicht ausgef&uuml;hrt werden. Fragen Sie Ihren Serverprovider '.
-                    'nach der Anpassung der PHP-Installation.</div>'.
+                    'nach der Anpassung der PHP-Installation oder kontaktieren Sie uns f&uuml;r eine alternative '.
+                    'Modulversion.</div>'.
                     '<div>&Uuml;ber den [+]-Button k&ouml;nnen Sie Ergebnisse zu den getesteten Verzeichnissen '.
                     'abrufen. Je nach Servereinstellung k&ouml;nnen die Ergebnisse abweichen. Nur die rot markierten '.
                     'Verzeichnisse erfordern eine Anpassung.</div>'.
-                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen".'.
-                    '</div>',
+                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen". '.
+                    'Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'hasExtension'           => '%1$s-Erweiterung verf&uuml;gbar',
                 'hasExtension_DESC'      => '<div>Das Modul erfordert die %1$s-Servererweiterung.</div>'.
                     '<div><div class="squ_bullet" style="background-color: green;"></div> Die %1$s-Erweiterung ist '.
@@ -1166,8 +1384,35 @@ class requTranslations
                     '<div>&Uuml;ber den [+]-Button k&ouml;nnen Sie Ergebnisse zu den getesteten Verzeichnissen '.
                     'abrufen. Je nach Servereinstellung k&ouml;nnen die Ergebnisse abweichen. Nur die rot markierten '.
                     'Verzeichnisse erfordern eine Anpassung.</div>'.
-                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen".'.
-                    '</div>',
+                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen". '.
+                    'Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasMinCurlVersion'      => 'mindestens cURL Version %1$s',
+                'hasMinCurlVersion_DESC' => '<div>Das Modul ben&ouml;tigt cURL ab der Version %1$s.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> cURL ist in '.
+                    'passender Version installiert.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> cURL ist nicht oder in einer '.
+                    '&auml;lteren Version installiert. Fragen Sie Ihren Serverprovider nach einer passenden '.
+                    'cURL-Version.</div>'.
+                    '<div>&Uuml;ber den [+]-Button k&ouml;nnen Sie Ergebnisse zu den getesteten Verzeichnissen '.
+                    'abrufen. Je nach Servereinstellung k&ouml;nnen die Ergebnisse abweichen. Nur die rot markierten '.
+                    'Verzeichnisse erfordern eine Anpassung.</div>'.
+                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen". '.
+                    'Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasMinOpenSSLVersion'   => 'mindestens OpenSSL Version %1$s',
+                'hasMinOpenSSLVersion_DESC' => '<div>Das Modul ben&ouml;tigt OpenSSL ab der Version %1$s.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> OpenSSL ist in '.
+                    'passender Version installiert.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> OpenSSL ist nicht oder in '.
+                    'einer &auml;lteren Version installiert. Fragen Sie Ihren Serverprovider nach einer passenden '.
+                    'OpenSSL-Version.</div>'.
+                    '<div>&Uuml;ber den [+]-Button k&ouml;nnen Sie Ergebnisse zu den getesteten Verzeichnissen '.
+                    'abrufen. Je nach Servereinstellung k&ouml;nnen die Ergebnisse abweichen. Nur die rot markierten '.
+                    'Verzeichnisse erfordern eine Anpassung.</div>'.
+                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen". '.
+                    'Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'hasMinShopVersion'      => 'mindestens Shop Version %1$s',
                 'hasMinShopVersion_DESC' => '<div>Das Modul ist ab Shopversion %1$s freigegeben.</div>'.
                     '<div><div class="squ_bullet" style="background-color: green;"></div> Die Shopsoftware ist in '.
@@ -1175,16 +1420,16 @@ class requTranslations
                     '<div><div class="squ_bullet" style="background-color: red;"></div> Das Modul kann in dieser '.
                     'Version der Shopsoftware nicht installiert werden. Fragen Sie nach einer fr&uuml;heren '.
                     'Modulversion, die f&uuml;r Ihre Shopversion getestet wurde.</div>'.
-                    '<div>Bei Fragen wenden Sie sich bitte an <a href="mailto:support@shopmodule.com">'.
+                    '<div>Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
                     'support@shopmodule.com</a>.</div>',
                 'hasMaxShopVersion'      => 'maximal Shop Version %1$s',
                 'hasMaxShopVersion_DESC' => '<div>Das Modul ist bis zur Shopversion %1$s freigegeben.</div>'.
                     '<div><div class="squ_bullet" style="background-color: green;"></div> Die Shopsoftware ist in '.
                     'passender Version installiert.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> Das Modul kann in dieser '.
-                    'Version der Shopsoftware nicht installiert werden. Fragen Sie nach einer aktuelleren '.
+                    '<div><div class="squ_bullet" style="background-color: orange;"></div> Wir k&ouml;nnen nicht '.
+                    'garantieren, dass das Modul in Ihrer Shopversion funktioniert. Fragen Sie nach einer aktuelleren '.
                     'Modulversion, die f&uuml;r Ihren Shop passt.</div>'.
-                    '<div>Bei Fragen wenden Sie sich bitte an <a href="mailto:support@shopmodule.com">'.
+                    '<div>Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
                     'support@shopmodule.com</a>.</div>',
                 'hasMinModCfgVersion'    => '%2$s (ModCfg-Eintrag "%1$s") mindestens in Version %3$s',
                 'hasMinModCfgVersion_DESC' => '<div>Das Modul ben&ouml;tigt die Zusatzsoftware "%2$s" mindestens in '.
@@ -1194,7 +1439,7 @@ class requTranslations
                     '<div><div class="squ_bullet" style="background-color: red;"></div> Die Zusatzsoftware ist '.
                     'm&ouml;glicherweise gar nicht oder in falscher Version installiert. Bitte installieren Sie die '.
                     'Zusatzsoftware, bevor Sie diese Installation fortsetzen.</div>'.
-                    '<div>Bei Fragen wenden Sie sich bitte an <a href="mailto:support@shopmodule.com">'.
+                    '<div>Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
                     'support@shopmodule.com</a>.</div>',
                 'hasMaxModCfgVersion'    => '%2$s (ModCfg-Eintrag "%1$s") maximal in Version %3$s',
                 'hasMaxModCfgVersion_DESC' => '<div>Das Modul ben&ouml;tigt die Zusatzsoftware "%2$s" h&ouml;chstens '.
@@ -1204,7 +1449,7 @@ class requTranslations
                     '<div><div class="squ_bullet" style="background-color: red;"></div> Die Zusatzsoftware ist '.
                     'm&ouml;glicherweise gar nicht oder in falscher Version installiert. Bitte installieren Sie die '.
                     'Zusatzsoftware, bevor Sie diese Installation fortsetzen.</div>'.
-                    '<div>Bei Fragen wenden Sie sich bitte an <a href="mailto:support@shopmodule.com">'.
+                    '<div>Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
                     'support@shopmodule.com</a>.</div>',
                 'requireNewLicence'      => 'bisheriger Lizenzschl&uuml;ssel kann verwendet werden',
                 'requireNewLicence_DESC' => '<div>Diese Pr&uuml;fung versucht zu ermitteln, ob Sie f&uuml;r den '.
@@ -1230,7 +1475,7 @@ class requTranslations
                     'Connector nicht ausgef&uuml;hrt werden. Bitte laden Sie sich diesen kostenfrei aus unserem Shop '.
                     'unter <a href="http://www.oxidmodule.com/connector/" target="connector">www.oxidmodule.com/'.
                     'connector/</a> und installieren diesen vorab.</div>'.
-                    '<div>Bei Fragen wenden Sie sich bitte an <a href="mailto:support@shopmodule.com">'.
+                    '<div>Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
                     'support@shopmodule.com</a>.</div>',
                 'isShopEdition'          => 'ist Shopedition %1$s',
                 'isShopEdition_DESC' => '<div>Das Modul erfordert eine dieser Shopeditionen: %1$s</div>'.
@@ -1239,39 +1484,67 @@ class requTranslations
                     '<div><div class="squ_bullet" style="background-color: red;"></div> Das Modul kann in Ihrer '.
                     'Shopedition nicht ausgef&uuml;hrt werden. Bitte fragen Sie nach einer Modulversion f&uuml;r Ihre '.
                     'Shopedition.</div>'.
-                    '<div>Bei Fragen wenden Sie sich bitte an <a href="mailto:support@shopmodule.com">'.
+                    '<div>Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
                     'support@shopmodule.com</a>.</div>',
                 'hasZendLoaderOptimizer' => 'Zend Optimizer (PHP 5.2) oder Zend Guard Loader (PHP 5.3, 5.4, 5.5, 5.6) '.
-                    'installiert',
+                    'installiert (auf passendes Zend-Installationspaket achten!)',
                 'hasZendLoaderOptimizer_DESC' => '<div>Das Modul erfordert (je nach PHP-Version) den Zend Optimizer '.
-                    'bzw. den Zend Guard Loader.</div>'.
+                    'bzw. den Zend Guard Loader. Achten Sie darauf, ein f&uuml;r den verf&uuml;gbaren Decoder '.
+                    'erstelltes Installationspaket zu verwenden.</div>'.
                     '<div><div class="squ_bullet" style="background-color: green;"></div> Der passende Decoder ist '.
                     'auf Ihrem Server installiert.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: orange;"></div> Der passende Decoder ist '.
+                    'auf Ihrem Server installiert. Es ist eine zus&auml;tzliche Erweiterungen (Zend OPcache) installiert, '.
+                    'die im Zusammenspiel mit dem Decoder Fehler verursachen kann.</div>'.
                     '<div><div class="squ_bullet" style="background-color: red;"></div> Das Modul kann ohne den '.
                     'passenden Decoder nicht ausgef&uuml;hrt werden. Fragen Sie Ihren Serverprovider nach der '.
                     'Installation des passenden Zend-Decoders.</div>'.
                     '<div>&Uuml;ber den [+]-Button k&ouml;nnen Sie Ergebnisse zu den getesteten Verzeichnissen '.
                     'abrufen. Je nach Servereinstellung k&ouml;nnen die Ergebnisse abweichen. Nur die rot markierten '.
                     'Verzeichnisse erfordern eine Anpassung.</div>'.
-                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen".'.
-                    '</div>',
-                'hasIonCubeLoader'       => 'ionCube Loader installiert',
-                'hasIonCubeLoader_DESC'  => '<div>Das Modul erfordert den IonCube Loader.</div>'.
+                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen". '.
+                    'Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasIonCubeLoader'       => 'ionCube Loader installiert (auf passendes ionCube-Installationspaket achten!)',
+                'hasIonCubeLoader_DESC'  => '<div>Das Modul erfordert den ionCube Loader. Achten Sie darauf, ein '.
+                    'f&uuml;r den verf&uuml;gbaren Decoder erstelltes Installationspaket zu verwenden.</div>'.
                     '<div><div class="squ_bullet" style="background-color: green;"></div> Der passende Decoder ist '.
                     'auf Ihrem Server installiert.</div>'.
                     '<div><div class="squ_bullet" style="background-color: red;"></div> Das Modul kann ohne den '.
                     'passenden Decoder nicht ausgef&uuml;hrt werden. Fragen Sie Ihren Serverprovider nach der '.
-                    'Installation des IonCube Loaders.</div>'.
+                    'Installation des ionCube Loaders.</div>'.
                     '<div>&Uuml;ber den [+]-Button k&ouml;nnen Sie Ergebnisse zu den getesteten Verzeichnissen '.
                     'abrufen. Je nach Servereinstellung k&ouml;nnen die Ergebnisse abweichen. Nur die rot markierten '.
                     'Verzeichnisse erfordern eine Anpassung.</div>'.
-                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen".'.
-                    '</div>',
+                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen". '.
+                    'Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasIonCubeOrZendLoader'       => 'ionCube Loader oder Zend Optimizer / Guard Loader installiert '.
+                    '<span class="note">(%1$s)</span>',
+                'hasIonCubeOrZendLoader_DESC'  => '<div>Das Modul erfordert den ionCube Loader oder den Zend '.
+                    'Optimizer / Guard Loader. Achten Sie darauf, ein f&uuml;r die verf&uuml;gbaren Decoder erstelltes '.
+                    'Installationspaket zu verwenden (%1$s).</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> Ein passender Decoder ist '.
+                    'auf Ihrem Server installiert.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: orange;"></div> Ein passender Decoder ist '.
+                    'auf Ihrem Server installiert. Es ist jedoch ein Abbruchgrund festgestellt worden, der zu Fehlern '.
+                    'f&uuml;hren kann. Details entnehmen Sie bitte den folgenden Hinweisen.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> Das Modul kann ohne einen '.
+                    'passenden Decoder nicht ausgef&uuml;hrt werden. Fragen Sie Ihren Serverprovider nach der '.
+                    'Installation des ionCube Loaders oder des Zend Optimizers / Guard Loaders.</div>'.
+                    '%2$s'.
+                    '<div>&Uuml;ber den [+]-Button k&ouml;nnen Sie Ergebnisse zu den getesteten Verzeichnissen '.
+                    'abrufen. Je nach Servereinstellung k&ouml;nnen die Ergebnisse abweichen. Nur die rot markierten '.
+                    'Verzeichnisse erfordern eine Anpassung.</div>'.
+                    '<div>Details zu Ihrer Serverinstallation sehen Sie durch Klick auf den Button "PHPInfo anzeigen". '.
+                    'Bei Fragen kontaktieren Sie uns bitte &uuml;ber <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'RemoteVersionDiff'      => ' <span class="note">(Remotescript hat abweichende Version oder ist nicht '.
+                    'pr&uuml;fbar, Ergebnis mglw. nicht sicher)</span>',
                 'globalSuccess'          => 'Die technische Pr&uuml;fung war erfolgreich. Sie k&ouml;nnen das Modul '.
                     'installieren.*<br><br>',
                 'globalNotSuccess'       => 'Die technische Pr&uuml;fung war nicht erfolgreich. Bitte kontrollieren '.
-                    'Sie die rot '.
-                    'markierten Bedingungen.<br><br>',
+                    'Sie die rot oder orange markierten Bedingungen.<br><br>',
                 'deleteFile1'            => 'L&ouml;schen Sie diese Datei nach der Verwendung bitte unbedingt wieder von '.
                     'Ihrem Server! Klicken Sie <a href="',
                 'deleteFile2'            => '?fnc=deleteme">hier</a>, um diese Datei zu l&ouml;schen.',
@@ -1284,6 +1557,20 @@ class requTranslations
                 'unableDeleteFile'       => 'Datei konnte nicht gel&ouml;scht werden. Bitte l&ouml;schen Sie diese '.
                     'manuell.',
                 'goodBye'                => 'Auf Wiedersehen.',
+                'unableExecuteDirectoryIterator' => 'Es k&ouml;nnen nicht alle Unterverzeichnisse auf weitere Pr&uuml;fungen '.
+                    'kontrolliert werden. (%1$s)',
+                'availableDecoder'       => 'verf&uuml;gbar: %1$s - auf passendes Installationspaket achten!',
+                'noDecoderAvailable'     => 'kein verwendbarer Decoder verf&uuml;gbar',
+                'availableDecoder_hasZendLoaderOptimizer' => 'Zend Guard Loader / Optimizer',
+                'notAvailableDecoder_hasZendLoaderOptimizer' => '<li>Der Zend Guard Loader / Optimizer ist nicht '.
+                    'installiert.</li>',
+                'decoderIssue_hasZendLoaderOptimizer' => '<li>Der Zend-Decoder ist '.
+                    'auf Ihrem Server installiert. Es ist jedoch eine zus&auml;tzliche Erweiterungen (Zend OPcache) '.
+                    'installiert, die im Zusammenspiel mit dem Zend-Decoder Fehler verursachen kann.</li>',
+                'availableDecoder_hasIonCubeLoader' => 'ionCube Loader',
+                'notAvailableDecoder_hasIonCubeLoader' => '<li>Der ionCube Loader ist nicht installiert.</li>',
+                'decoderIssue_hasIonCubeLoader' => '<li>Es wurde ein nicht definierter Abbruchgrund bei der '.
+                    'Verwendung des ionCube-Decoders festgestellt.</li>',
             ),
             'en' => array(
                 'RequCheck'              => 'Requirement check',
@@ -1291,116 +1578,193 @@ class requTranslations
                     'case only checks can executed succesfully.',
                 'RequSucc'               => 'condition is fulfilled',
                 'RequNotSucc'            => 'condition isn\'t fulfilled',
-                'RequUnknown'            => 'condition isn\'t checkable',
+                'RequUnknown'            => 'condition unclear, see notes in help text',
                 'RequNotCheckable'       => 'condition isn\'t checkable',
                 'hasMinPhpVersion'       => 'at least PHP version %1$s',
-                'hasMinPhpVersion_DESC'  => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
+                'hasMinPhpVersion_DESC'  => '<div>The module requires a PHP version at least %1$s</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The appropriate version of PHP '.
+                    'is activated on your server.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The module can not be executed within '.
+                    'the actived PHP version. Ask your server provider for for the adaption of your PHP installation or '.
+                    'contact us for another module version.</div>'.
+                    '<div>The [+] button show details for all tested directories. Depending on the server settings, '.
+                    'the results may vary. Only the red marked directories requires adaptation.</div>'.
+                    '<div>Details about your server installation you can see by clicking on the button "show PHPinfo". '.
+                    'If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'hasMaxPhpVersion'       => 'not more than PHP version %1$s',
-                'hasMaxPhpVersion_DESC'  => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
+                'hasMaxPhpVersion_DESC'  => '<div>The module requires a PHP version not more than %1$s</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The appropriate version of PHP '.
+                    'is activated on your server.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The module can not be executed within '.
+                    'the actived PHP version. Ask your server provider for for the adaption of your PHP installation or '.
+                    'contact us for another module version.</div>'.
+                    '<div>The [+] button show details for all tested directories. Depending on the server settings, '.
+                    'the results may vary. Only the red marked directories requires adaptation.</div>'.
+                    '<div>Details about your server installation you can see by clicking on the button "show PHPinfo". '.
+                    'If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'hasFromToPhpVersion'    => 'server use PHP version between %1$s and %2$s',
-                'hasFromToPhpVersion_DESC'=> '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
+                'hasFromToPhpVersion_DESC'=> '<div>The module requires a PHP version between %1$s and %2$s</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The appropriate version of PHP '.
+                    'is activated on your server.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The module can not be executed within '.
+                    'the actived PHP version. Ask your server provider for for the adaption of your PHP installation or '.
+                    'contact us for another module version.</div>'.
+                    '<div>The [+] button show details for all tested directories. Depending on the server settings, '.
+                    'the results may vary. Only the red marked directories requires adaptation.</div>'.
+                    '<div>Details about your server installation you can see by clicking on the button "show PHPinfo". '.
+                    'If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'hasExtension'           => '%1$s extension is available',
-                'hasExtension_DESC'      => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
+                'hasExtension_DESC'      => '<div>The module requires the %1$s server extension.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The %1$s server extension is '.
+                    'available on your server.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The module can not be executed '.
+                    'without the %1$s extension. Ask your server provider for installing this extension.</div>'.
+                    '<div>The [+] button show details for all tested directories. Depending on the server settings, '.
+                    'the results may vary. Only the red marked directories requires adaptation.</div>'.
+                    '<div>Details about your server installation you can see by clicking on the button "show PHPinfo". '.
+                    'If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasMinCurlVersion'      => 'at least cURL version %1$s',
+                'hasMinCurlVersion_DESC' => '<div>The module requires at least cURL version %1$s.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> cURL is available '.
+                    'in a compatible version.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> cURL is not installed or '.
+                    'installed in an older version. Ask your server provider for an appropriate version.</div>'.
+                    '<div>The [+] button show details for all tested directories. Depending on the server settings, '.
+                    'the results may vary. Only the red marked directories requires adaptation.</div>'.
+                    '<div>Details about your server installation you can see by clicking on the button "show PHPinfo". '.
+                    'If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasMinOpenSSLVersion'   => 'at least OpenSSL version %1$s',
+                'hasMinOpenSSLVersion_DESC' => '<div>The module requires at least OpenSSL version %1$s.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> OpenSSL is availabe '.
+                    'in a compatible version.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> OpenSSL is not installed or '.
+                    'installed in an older version. Ask your server provider for an appropriate version.</div>'.
+                    '<div>The [+] button show details for all tested directories. Depending on the server settings, '.
+                    'the results may vary. Only the red marked directories requires adaptation.</div>'.
+                    '<div>Details about your server installation you can see by clicking on the button "show PHPinfo". '.
+                    'If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'hasMinShopVersion'      => 'at least shop version %1$s',
-                'hasMinShopVersion_DESC' => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
+                'hasMinShopVersion_DESC' => '<div>The module is released to shop version %1$s</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The shop software is installed '.
+                    'in a compatible version.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> We can not guarantee, '.
+                    'that this module works properly in your shop version. Please ask for a matching module version.</div>'.
+                    '<div>If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'hasMaxShopVersion'      => 'not more than shop version %1$s',
-                'hasMaxShopVersion_DESC' => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
-                'hasMinModCfgVersion'    => '%2$s (ModCfg item "%1$s") has at least version %3$s',
-                'hasMinModCfgVersion_DESC' => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
-                'hasMaxModCfgVersion'    => '%2$s (ModCfg item "%1$s") has not more than version %3$s',
-                'hasMaxModCfgVersion_DESC' => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
+                'hasMaxShopVersion_DESC' => '<div>The module is released to shop version %1$s</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The shop software is installed '.
+                    'in a compatible version.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: orange;"></div> We can not guarantee, '.
+                    'that this module works properly in your shop version. Please ask for a matching module version.</div>'.
+                    '<div>If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasMinModCfgVersion'    => '%2$s (ModCfg item "%1$s") at least in version %3$s',
+                'hasMinModCfgVersion_DESC' => '<div>The module requires additional software "%2$s" at least '.
+                    'in version %3$s</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The software is installed '.
+                    'in a compatible version.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The additional software is '.
+                    'not installed or in wrong version available. Please install the additional software before '.
+                    'proceeding this installation.</div>'.
+                    '<div>If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasMaxModCfgVersion'    => '%2$s (ModCfg item "%1$s") not more than in version %3$s',
+                'hasMaxModCfgVersion_DESC' => '<div>The module requires additional software "%2$s" not more than '.
+                    'in version %3$s</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The software is installed '.
+                    'in a compatible version.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The additional software is '.
+                    'be installed or in wrong version available. Please install the additional software before '.
+                    'proceeding this installation.</div>'.
+                    '<div>If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'requireNewLicence'      => 'former licence key can be used',
-                'requireNewLicence_DESC' => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
+                'requireNewLicence_DESC' => '<div>This test tries to determine whether you need a new licence key '.
+                    'for the use of this module</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> You have stored a license key '.
+                    'for this module, which is probably also compatible for the new module version.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> You need likely a new license '.
+                    'key for this module. Do you have already one, run the installation and then apply the license '.
+                    'key in the admin panel of your shop. Otherwise, you can purchase it in our shop '.
+                    '<a href="http://www.oxidmodule.com" target="oxidmodule.com">oxidmodule.com</a> or also create a '.
+                    'free trial license key in the admin panel of your shop.</div>'.
+                    '<div>If you have any questions, please contact us at <a href="mailto:buchhaltung@shopmodule.com">'.
+                    'buchhaltung@shopmodule.com</a>.</div>',
                 'hasModCfg'              => '<a href="http://www.oxidmodule.com/Connector" target="Connector">Module '.
                     'Connector</a> installed',
-                'hasModCfg_DESC'         => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
+                'hasModCfg_DESC'         => '<div>The module requires necessarily the D<sup>3</sup> Module Connector.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The Module Connector is '.
+                    'installed.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The module can not be executed '.
+                    'without the Module Connector. Please download this free of charge from our shop '.
+                    '<a href="http://www.oxidmodule.com/connector/" target="connector">www.oxidmodule.com/'.
+                    'connector/</a> and install it beforehand.</div>'.
+                    '<div>If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
                 'isShopEdition'          => 'shop edition is %1$s',
-                'isShopEdition_DESC'     => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
-                'hasZendLoaderOptimizer' => 'Zend Optimizer (PHP 5.2) or Zend Guard Loader (PHP 5.3, 5.4, 5.5, 5.6) installed',
-                'hasZendLoaderOptimizer_DESC' => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
-                'hasIonCubeLoader'       => 'ionCube loader installed',
-                'hasonCubeLoader_DESC'   => '<div>requirement check result</div>'.
-                    '<div><div class="squ_bullet" style="background-color: green;"></div> This requirement is '.
-                    'fulfilled.</div>'.
-                    '<div><div class="squ_bullet" style="background-color: red;"></div> This requirement isn\'t '.
-                    'fulfilled. The module can\'t installed or executed.</div>'.
-                    '<div>The [+] button show details for all tested directories. If you have any questions, please '.
-                    'contact us at support@shopmodule.com.</div>',
+                'isShopEdition_DESC'     => '<div>The module requires one of these shop editions: %1$s</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The shop is installed '.
+                    'in the appropriate edition.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The module can not be executed '.
+                    'in your shop edition. Please ask for a module version for your shop edition.</div>'.
+                    '<div>If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasZendLoaderOptimizer' => 'Zend Optimizer (PHP 5.2) or Zend Guard Loader (PHP 5.3, 5.4, 5.5, 5.6) '.
+                    'installed (pay attention to the compatible Zend installation package!)',
+                'hasZendLoaderOptimizer_DESC' => '<div>The module requires (depending on the PHP version) the Zend Guard Optimizer '.
+                    'or the Zend Guard Loader.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The appropriate decoder is '.
+                    'installed on your server.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: orange;"></div> The decoder is '.
+                    'installed on your server. There is an additional installed extension (Zend OPcache), '.
+                    'which can cause errors in combination with the decoder.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The decoder isn\'t '.
+                    'installed on your server. The module can\'t installed or executed. Please contact your server provider.</div>'.
+                    '<div>The [+] button show details for all tested directories. Depending on the server settings, '.
+                    'the results may vary. Only the red marked directories requires adaptation.</div>'.
+                    '<div>Details about your server installation you can see by clicking on the button "show PHPinfo". '.
+                    'If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasIonCubeLoader'       => 'ionCube Loader installed (pay attention to the compatible ionCube installation package!)',
+                'hasIonCubeLoader_DESC'   => '<div>The module requires the ionCube Loader.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> The appropriate decoder is '.
+                    'installed on your server.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> The decoder isn\'t '.
+                    'installed on your server. The module can\'t installed or executed. Please contact your server provider.</div>'.
+                    '<div>The [+] button show details for all tested directories. Depending on the server settings, '.
+                    'the results may vary. Only the red marked directories requires adaptation.</div>'.
+                    '<div>Details about your server installation you can see by clicking on the button "show PHPinfo". '.
+                    'If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'hasIonCubeOrZendLoader'       => 'ionCube Loader or Zend Optimizer / Guard Loader installed '.
+                    '<span class="note">(%1$s)</span>',
+                'hasIonCubeOrZendLoader_DESC'   => '<div>The module requires the ionCube Loader or the Zend '.
+                    'Optimizer / Guard Loader. Pay attention to use a compatible installation package (%1$s).</div>'.
+                    '<div><div class="squ_bullet" style="background-color: green;"></div> One of the appropriate '.
+                    'decoders is installed on your server.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: orange;"></div> One of the appropriate '.
+                    'decoder is installed on your server. An undefined abort reason has been found, which can cause '.
+                    'to errors. For details, please refer to the following notes.</div>'.
+                    '<div><div class="squ_bullet" style="background-color: red;"></div> None of the decoders is '.
+                    'installed on your server. The module can\'t installed or executed. Please contact your server provider.</div>'.
+                    '%2$s'.
+                    '<div>The [+] button show details for all tested directories. Depending on the server settings, '.
+                    'the results may vary. Only the red marked directories requires adaptation.</div>'.
+                    '<div>Details about your server installation you can see by clicking on the button "show PHPinfo". '.
+                    'If you have any questions, please contact us at <a href="mailto:support@shopmodule.com">'.
+                    'support@shopmodule.com</a>.</div>',
+                'RemoteVersionDiff'      => ' <span class="note">(Remote script has different version or isn\'t '.
+                    'callable, result may not be safe)</span>',
                 'globalSuccess'          => 'The technical test was successful. Your server is ready for installing '.
                     'the module.*<br><br>',
-                'globalNotSuccess'       => 'The technical test wasn\'t successfull. Please check the red marked '.
+                'globalNotSuccess'       => 'The technical test wasn\'t successfull. Please check the red or orange marked '.
                     'conditions.<br><br>',
                 'deleteFile1'            => 'Please delete this file after use on your server! Click <a href="',
                 'deleteFile2'            => '?fnc=deleteme">here</a>, to delete this file.',
@@ -1412,6 +1776,19 @@ class requTranslations
                 'toggleswitch'           => 'click for details',
                 'unableDeleteFile'       => 'Unable to delete file. Please delete it manually.',
                 'goodBye'                => 'Good Bye.',
+                'unableExecuteDirectoryIterator' => 'Unable to check subdirectories for further checks. (%1$s)',
+                'availableDecoder'       => 'available: %1$s - pay attention to the compatible installation package!',
+                'noDecoderAvailable'     => 'no usable decoder available',
+                'availableDecoder_hasZendLoaderOptimizer' => 'Zend Guard Loader / Optimizer',
+                'notAvailableDecoder_hasZendLoaderOptimizer' => '<li>Zend Guard Loader / Optimizer isn\'t '.
+                    'available.</li>',
+                'decoderIssue_hasZendLoaderOptimizer' => '<li>The Zend decoder is '.
+                    'installed on your server. There is an additional installed extension (Zend OPcache), '.
+                    'which can cause errors in combination with the decoder.</li>',
+                'availableDecoder_hasIonCubeLoader' => 'ionCube Loader',
+                'notAvailableDecoder_hasIonCubeLoader' => '<li>ionCube Loader isn\'t available.</li>',
+                'decoderIssue_hasIonCubeLoader' => '<li>An undefined abort reason has been found when using the '.
+                    'ionCube decoder.</li>',
             ),
         );
     }
@@ -1657,7 +2034,7 @@ class requTests
      */
     public function hasMinPhpVersion(&$aConfiguration)
     {
-        $aResult[$this->getBasePath()] = false;
+        $aResult = array($this->getBasePath() => false);
 
         if (version_compare(phpversion(), $aConfiguration['aParams']['version'], '>=')) {
             $aResult[$this->getBasePath()] = true;
@@ -1675,7 +2052,7 @@ class requTests
      */
     public function hasFromToPhpVersion(&$aConfiguration)
     {
-        $aResult[$this->getBasePath()] = false;
+        $aResult = array($this->getBasePath() => false);
 
         if ((version_compare(phpversion(), $aConfiguration['aParams']['from'], '>=')) &&
             (version_compare(phpversion(), $aConfiguration['aParams']['to'], '<'))
@@ -1695,7 +2072,7 @@ class requTests
      */
     public function hasMaxPhpVersion(&$aConfiguration)
     {
-        $aResult[$this->getBasePath()] = false;
+        $aResult = array($this->getBasePath() => false);
 
         if (version_compare(phpversion(), $aConfiguration['aParams']['version'], '<=')) {
             $aResult[$this->getBasePath()] = true;
@@ -1713,7 +2090,7 @@ class requTests
      */
     public function hasExtension(&$aConfiguration)
     {
-        $aResult[$this->getBasePath()] = false;
+        $aResult = array($this->getBasePath() => false);
 
         if (extension_loaded($aConfiguration['aParams']['type'])) {
             $aResult[$this->getBasePath()] = true;
@@ -1726,6 +2103,69 @@ class requTests
 
     /**
      * @param $aConfiguration
+     * @return array
+     */
+    public function hasMinCurlVersion(&$aConfiguration)
+    {
+        $aCurlVersion = curl_version();
+        $aResult = array(
+            $this->getBasePath() => version_compare($aCurlVersion['version'], $aConfiguration['aParams']['version'], '>=')
+        );
+
+        $aResult = array_merge($aResult, $this->checkInSubDirs(__FUNCTION__, $aConfiguration['aParams']));
+
+        return $aResult;
+    }
+
+    /**
+     * @param $aConfiguration
+     * @return array
+     */
+    public function hasMinOpenSSLVersion(&$aConfiguration)
+    {
+        $aResult = array(
+            $this->getBasePath() => version_compare($this->get_openssl_version_number(true), $aConfiguration['aParams']['version'], '>=')
+        );
+
+        $aResult = array_merge($aResult, $this->checkInSubDirs(__FUNCTION__, $aConfiguration['aParams']));
+
+        return $aResult;
+    }
+
+    /**
+     * @param bool $patch_as_number
+     * @param null $openssl_version_number
+     * @return bool|string
+     */
+    protected function get_openssl_version_number($patch_as_number=false,$openssl_version_number=null) {
+        if (is_null($openssl_version_number)) $openssl_version_number = OPENSSL_VERSION_NUMBER;
+        $openssl_numeric_identifier = str_pad((string)dechex($openssl_version_number),8,'0',STR_PAD_LEFT);
+
+        $openssl_version_parsed = array();
+        $preg = '/(?<major>[[:xdigit:]])(?<minor>[[:xdigit:]][[:xdigit:]])(?<fix>[[:xdigit:]][[:xdigit:]])';
+        $preg.= '(?<patch>[[:xdigit:]][[:xdigit:]])(?<type>[[:xdigit:]])/';
+        preg_match_all($preg, $openssl_numeric_identifier, $openssl_version_parsed);
+        $openssl_version = false;
+        if (!empty($openssl_version_parsed)) {
+            $alphabet = array(1=>'a',2=>'b',3=>'c',4=>'d',5=>'e',6=>'f',7=>'g',8=>'h',9=>'i',10=>'j',11=>'k',
+                12=>'l',13=>'m',14=>'n',15=>'o',16=>'p',17=>'q',18=>'r',19=>'s',20=>'t',21=>'u',
+                22=>'v',23=>'w',24=>'x',25=>'y',26=>'z');
+            $openssl_version = intval($openssl_version_parsed['major'][0]).'.';
+            $openssl_version.= intval($openssl_version_parsed['minor'][0]).'.';
+            $openssl_version.= intval($openssl_version_parsed['fix'][0]);
+            $patchlevel_dec = hexdec($openssl_version_parsed['patch'][0]);
+            if (!$patch_as_number && array_key_exists($patchlevel_dec, $alphabet)) {
+                $openssl_version.= $alphabet[$patchlevel_dec]; // ideal for text comparison
+            }
+            else {
+                $openssl_version.= '.'.$patchlevel_dec; // ideal for version_compare
+            }
+        }
+        return $openssl_version;
+    }
+
+    /**
+     * @param $aConfiguration
      *
      * @return bool
      */
@@ -1734,8 +2174,8 @@ class requTests
         if ($this->getDb()) {
             $sField  = 'oxversion';
             $sSelect = "SELECT " . $sField . " FROM oxshops WHERE 1 ORDER BY oxversion ASC LIMIT 1";
-            $rResult = mysql_query($sSelect, $this->getDb());
-            $oResult = mysql_fetch_object($rResult);
+            $rResult = mysqli_query($this->getDb(), $sSelect);
+            $oResult = mysqli_fetch_object($rResult);
 
             $oEditionResult = $this->_getShopEdition();
             $sEdition       = strtoupper($oEditionResult->oxedition);
@@ -1770,8 +2210,8 @@ class requTests
         if ($this->getDb()) {
             $sField  = 'oxversion';
             $sSelect = "SELECT " . $sField . " FROM oxshops WHERE 1 ORDER BY oxversion DESC LIMIT 1";
-            $rResult = mysql_query($sSelect, $this->getDb());
-            $oResult = mysql_fetch_object($rResult);
+            $rResult = mysqli_query($this->getDb(), $sSelect);
+            $oResult = mysqli_fetch_object($rResult);
 
             $oEditionResult = $this->_getShopEdition();
             $sEdition       = strtoupper($oEditionResult->oxedition);
@@ -1833,8 +2273,8 @@ class requTests
         if ($this->getDb()) {
             $sField  = 'oxedition';
             $sSelect = "SELECT " . $sField . " FROM oxshops WHERE 1 LIMIT 1";
-            $rResult = mysql_query($sSelect, $this->getDb());
-            $oResult = mysql_fetch_object($rResult);
+            $rResult = mysqli_query($this->getDb(), $sSelect);
+            $oResult = mysqli_fetch_object($rResult);
 
             return $oResult;
         }
@@ -1850,11 +2290,11 @@ class requTests
         if ($this->getDb()) {
             $sModId  = 'd3modcfg_lib';
             $sSelect = "SELECT 1 as result FROM d3_cfg_mod WHERE oxmodid = '" . $sModId . "' LIMIT 1";
-            $rResult = mysql_query($sSelect, $this->getDb());
-            if (is_resource($rResult)) {
-                $oResult = mysql_fetch_object($rResult);
+            $rResult = mysqli_query($this->getDb(), $sSelect);
+            if (is_object($rResult)) {
+                $oResult = mysqli_fetch_object($rResult);
 
-                if ($oResult->result) {
+                if ((bool) $oResult->result == true) {
                     return true;
                 }
             }
@@ -1879,14 +2319,15 @@ class requTests
                     oxversion != 'basic'
                     ORDER BY oxversion ASC LIMIT 1";
 
-            $rResult = mysql_query($sSelect, $this->getDb());
-            $aResult = mysql_fetch_assoc($rResult);
+            $rResult = mysqli_query($this->getDb(), $sSelect);
+            $oResult = mysqli_fetch_object($rResult);
+            $blReturn = (bool)$oResult->result;
 
-            if (!(int)$aResult['result']) {
+            if (false == $blReturn) {
                 $this->setGlobalResult(false);
             }
 
-            return (int)$aResult['result'];
+            return $blReturn;
         }
 
         $this->setGlobalResult(false);
@@ -1909,14 +2350,15 @@ class requTests
                 oxversion != 'basic'
                 ORDER BY oxversion ASC LIMIT 1";
 
-            $rResult = mysql_query($sSelect, $this->getDb());
-            $aResult = mysql_fetch_assoc($rResult);
+            $rResult = mysqli_query($this->getDb(), $sSelect);
+            $oResult = mysqli_fetch_object($rResult);
+            $blResult = (bool)$oResult->result;
 
-            if (!(int)$aResult['result']) {
+            if (false == $blResult) {
                 $this->setGlobalResult(false);
             }
 
-            return (int)$aResult['result'];
+            return $blResult;
         }
 
         $this->setGlobalResult(false);
@@ -1938,17 +2380,16 @@ class requTests
                 oxmodid = '" . $this->oConfig->sModId . "'
                 ORDER BY oxversion ASC LIMIT 1";
 
-            $rResult = mysql_query($sSelect, $this->getDb());
-            $aResult = mysql_fetch_assoc($rResult);
+            $rResult = mysqli_query($this->getDb(), $sSelect);
+            $oResult = mysqli_fetch_object($rResult);
 
-            if (isset($aResult)
-                && is_array($aResult)
-                && count($aResult)
-                && isset($aResult['oxversion'])
-                && $aConfiguration['aParams']['checkVersion']
+            if (isset($oResult)
+                && is_object($oResult)
+                && isset($oResult->oxversion)
+                && isset($aConfiguration['aParams']['checkVersion'])
             ) {
                 $sInstalledVersion = $this->_getConvertedVersion(
-                    $aResult['oxversion'],
+                    $oResult->oxversion,
                     $aConfiguration['aParams']['remainingDigits']
                 );
                 $sNewVersion = $this->_getConvertedVersion(
@@ -1980,23 +2421,31 @@ class requTests
     /**
      * @return array
      */
-    public function hasZendLoaderOptimizer()
+    public function hasZendLoaderOptimizer(&$aConfiguration, $blCheckBasePathOnly = false)
     {
         $aResult = array($this->getBasePath() => false);
 
-        if ((version_compare(phpversion(), '5.2.0', '>=') &&
-                version_compare(phpversion(), '5.2.900', '<') &&
-                function_exists('zend_optimizer_version')
-            ) || (
-                version_compare(phpversion(), '5.3.0', '>=') &&
-                version_compare(phpversion(), '5.6.900', '<') &&
-                function_exists('zend_loader_version')
-            )
-        ) {
-            $aResult[$this->getBasePath()] = true;
+        if ((version_compare(phpversion(), '5.2.0', '>=')
+            && version_compare(phpversion(), '5.2.900', '<')
+            && function_exists('zend_optimizer_version')
+        ) || (
+            version_compare(phpversion(), '5.3.0', '>=')
+            && version_compare(phpversion(), '5.6.900', '<')
+            && function_exists('zend_loader_version')
+        )) {
+            if (function_exists('opcache_get_status')
+                && ($aOpCacheStatus = opcache_get_status())
+                && $aOpCacheStatus['opcache_enabled']
+            ) {
+                $aResult[$this->getBasePath()] = null;
+            } else {
+                $aResult[$this->getBasePath()] = true;
+            }
         }
 
-        $aResult = array_merge($aResult, $this->checkInSubDirs(__FUNCTION__));
+        if ($blCheckBasePathOnly == false) {
+            $aResult = array_merge($aResult, $this->checkInSubDirs(__FUNCTION__));
+        }
 
         return $aResult;
     }
@@ -2004,7 +2453,7 @@ class requTests
     /**
      * @return array
      */
-    public function hasIonCubeLoader()
+    public function hasIonCubeLoader(&$aConfiguration, $blCheckBasePathOnly = false)
     {
         $aResult = array($this->getBasePath() => false);
 
@@ -2012,7 +2461,59 @@ class requTests
             $aResult[$this->getBasePath()] = true;
         }
 
-        $aResult = array_merge($aResult, $this->checkInSubDirs(__FUNCTION__));
+        if ($blCheckBasePathOnly == false) {
+            $aResult = array_merge($aResult, $this->checkInSubDirs(__FUNCTION__));
+        }
+
+        return $aResult;
+    }
+
+    /**
+     * @return array
+     */
+    public function hasIonCubeOrZendLoader(&$aConfiguration)
+    {
+        $oLayout = $this->getBase()->oLayout;
+
+        $aDecoderTexts = array();
+        $aDecoderErrorTexts = array();
+        foreach (array('hasZendLoaderOptimizer', 'hasIonCubeLoader') as $sDecoderCheck) {
+            $aReturn = call_user_func_array(array($this, $sDecoderCheck), array($aConfiguration, true));
+            if ($aReturn[$this->getBasePath()]) {
+                $aDecoderTexts[$sDecoderCheck] = $oLayout->translate('availableDecoder_'.$sDecoderCheck);
+            } elseif ($aReturn[$this->getBasePath()] === null) {
+                $aDecoderErrorTexts[$sDecoderCheck] = $oLayout->translate('decoderIssue_'.$sDecoderCheck);
+            } else {
+                $aDecoderErrorTexts[$sDecoderCheck] = $oLayout->translate('notAvailableDecoder_'.$sDecoderCheck);
+            }
+        }
+
+        $sDecoderText = count($aDecoderTexts) ?
+            sprintf($oLayout->translate('availableDecoder'), implode(' + ', $aDecoderTexts)) :
+            $oLayout->translate('noDecoderAvailable');
+        $aConfiguration['aParams'][1] = $sDecoderText;
+
+        $sDecoderErrorText = count($aDecoderErrorTexts) ?
+            '<ul>'.implode('', $aDecoderErrorTexts).'</ul>' :
+            '';
+        $aConfiguration['aParams'][2] = $sDecoderErrorText;
+
+        $aZendLoaderResults = $this->hasZendLoaderOptimizer($aConfiguration);
+        $aIonCubeLoaderResults = $this->hasIonCubeLoader($aConfiguration);
+
+        $aResult = array();
+        foreach (array_keys($aZendLoaderResults) as $sPath) {
+            // transfer meta data
+            if (strstr($sPath, '@@')) {
+                $aResult[$sPath] = $aZendLoaderResults[$sPath];
+            } elseif ($aIonCubeLoaderResults[$sPath] || $aZendLoaderResults[$sPath]) {
+                $aResult[$sPath] = true;
+            } elseif ($aIonCubeLoaderResults[$sPath] === null || $aZendLoaderResults[$sPath] === null) {
+                $aResult[$sPath] = null;
+            } else {
+                $aResult[$sPath] = false;
+            }
+        }
 
         return $aResult;
     }
@@ -2056,9 +2557,10 @@ class requTransformation
             $sSelect = "SELECT oxversion as result ".
                 "FROM d3_cfg_mod ".
                 "WHERE oxmodid = 'd3modcfg_lib' LIMIT 1";
-            $rResult = mysql_query($sSelect, $this->oCheck->getDb());
-            if (is_resource($rResult)) {
-                $oResult = mysql_fetch_object($rResult);
+            $rResult = mysqli_query($this->oCheck->getDb(), $sSelect);
+
+            if (is_object($rResult)) {
+                $oResult = mysqli_fetch_object($rResult);
                 if ($oResult->result) {
                     $sCheckVersion = $oResult->result;
                 }

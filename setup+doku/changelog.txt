@@ -1,3 +1,12 @@
+=> 2.1.0.0
+- Datenbank-Tabelle auf InnoDb geändert
+- Tabellenindizes für optimierte Abfragen ergänzt
+- Löschabfragen wegen mglw. hoher Datenbanklast begrenzt
+- Besuchereinträge wurden um Seitendetails ergänzt
+- Auswertung im Backend lässt sich zwischen bisheriger und neuer Gruppierung umschalten
+- Auswertung im Frontend entfernt (#6828)
+- fehlerhafte Übersetzung korrigiert (#6827)
+
 => 2.0.1.1
 - Precheck für PHP 5.5 und 5.6 angepasst
 

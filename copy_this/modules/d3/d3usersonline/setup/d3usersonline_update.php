@@ -22,20 +22,24 @@ class d3usersonline_update extends d3install_updatebase
 {
     public $sModKey = 'd3usersonline';
     public $sModName = 'Users Online';
-    public $sModVersion = '2.0.1.1';
-    public $sModRevision = '43';
-    public $sBaseConf = 'Nv6RXZkcTl5NmIybDdzQldqUWo5dURBTXB4Tld3aHN3N2pmNmZacUljL0R4WUg2a1o4QUxLeVUrdjBSZ
-WFud2VjRFJDa2ZvTHVaS2tpczAyZ0NGOGxwV3ZISHB3c0xRLzQ4Ny9kcTdDSjVQZDBYZ3VUMHFNaVg1R
-3ZudGMzOGhsb01Sd1dTRG4xd0xscCtORC93VXJsWngrV200YktMSk93UENWNzJuT2NaT0U0UkJaQWdqa
-nVKT0RwVFFzclYrT2JnckNGZjNieVRDSzcyV2Z2QktDR3RqNWJsemd6WURVMm1tbWl5cEJNMDFvR3JiS
-2F5OHIvb0VoMUw1Nm9XdWdTc2FwVWpCVWFkZEllT1lGTzdiY2I0YUdNMmV3K3kyakZQMVRuUVJyUjhKO
-DQ9';
+    public $sModVersion = '2.1.0.0';
+    public $sModRevision = '2100';
+    public $sBaseConf = 'qWOv2==Y0dBTjQ4SGQ5Z0wwRVduakMxL01XL1c2dWlpK0p0bEJQeGZEcldMN3hINm5jOTJCWmV6MWhyV
+FVDVS9KQ3hwWUtUQmM3d1RVLzBVNGZISCsxVG0wWmVlNTlYOUNGQ0g2b2Z0NGlYQWZXZGprUXdZTzE0c
+zRHbGJKaEx0aWZNc3ZSTC9FdU10eHhadDA1c3NZdFlaNmZGQWF0VzUzVWxRQllhTFYxdmQyQTBLekRRM
+jhrdDB5M0RnWWJQM3NMSVhBQ2RkS1l2WWJPV3lTNlNWOEwrSGxHdElTMmhoZ2FPYUhQN0lVOEpDZmVwY
+0JLWndPRjVidU4rQzM3V29lcXBuaFFGdEdQZGxZZUFyWjFIZkVXVnZpT0NzTkhjV2drRzJCVStIOHVRb
+0xLMGJvTTN5Z2ZYV0ZMY2NtY1dCVGkra0M=';
     public $sRequirements = '';
     public $sBaseValue = '';
+
+    public $sMinModCfgVersion = '4.4.0.0';
 
     protected $_aUpdateMethods = array(
         array('check' => 'checkUsersOnlineTableExist',
               'do'    => 'updateUsersOnlineTableExist'),
+        array('check' => 'checkUsersOnlineTableEngine',
+              'do'    => 'updateUsersOnlineTableEngine'),
         array('check' => 'checkRenameFields',
               'do'    => 'fixRenameFields'),
         array('check' => 'checkDeleteFields',
@@ -89,6 +93,16 @@ DQ9';
             'sExtra'      => '',
             'blMultilang' => false,
         ),
+        'OXPAGE'            => array(
+            'sTableName'  => 'd3usersonline',
+            'sFieldName'  => 'OXPAGE',
+            'sType'       => 'VARCHAR(32)',
+            'blNull'      => false,
+            'sDefault'    => false,
+            'sComment'    => '',
+            'sExtra'      => '',
+            'blMultilang' => false,
+        ),
     );
 
     public $aIndizes = array(
@@ -105,6 +119,23 @@ DQ9';
             'sName'      => 'OXCLASS',
             'aFields'    => array(
                 'OXCLASS' => 'OXCLASS',
+            ),
+        ),
+        'CLASSPAGE' => array(
+            'sTableName' => 'd3usersonline',
+            'sType'      => '',
+            'sName'      => 'CLASSPAGE',
+            'aFields'    => array(
+                'OXCLASS' => 'OXCLASS',
+                'OXPAGE'  => 'OXPAGE',
+            ),
+        ),
+        'TIMEVISIT' => array(
+            'sTableName' => 'd3usersonline',
+            'sType'      => '',
+            'sName'      => 'TIMEVISIT',
+            'aFields'    => array(
+                'TIMEVISIT' => 'TIMEVISIT',
             ),
         ),
     );
@@ -162,9 +193,36 @@ DQ9';
         $blRet = true;
 
         if ($this->checkUsersOnlineTableExist()) {
-            $blRet = $this->_addTable2('d3usersonline', $this->aFields, $this->aIndizes, 'users online', 'MyISAM');
+            $blRet = $this->_addTable2('d3usersonline', $this->aFields, $this->aIndizes, 'users online', 'InnoDB');
         }
 
+        return $blRet;
+    }
+
+    /**
+     * @return bool true, if table has wrong engine
+     */
+    public function checkUsersOnlineTableEngine()
+    {
+        /** @var d3installdbtable $oDbTable */
+        $oDbTable = oxNew('d3installdbtable', $this);
+        $aData = $oDbTable->getTableData('d3usersonline');
+
+        if (isset($aData) && count($aData) && isset($aData['ENGINE']) && $aData['ENGINE'] == 'InnoDB') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return bool
+     */
+    public function updateUsersOnlineTableEngine()
+    {
+        /** @var d3installdbtable $oDbTable */
+        $oDbTable = oxNew('d3installdbtable', $this);
+        $blRet = $oDbTable->changeTableEngine('d3usersonline', 'InnoDB');
         return $blRet;
     }
 

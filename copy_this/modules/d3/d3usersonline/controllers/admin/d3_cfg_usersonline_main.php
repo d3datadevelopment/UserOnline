@@ -25,5 +25,9 @@ class d3_cfg_usersonline_Main extends d3_cfg_mod_main
 
     protected $_blHasTestModeSwitch = false;
 
+    protected $_sMenuItemTitle = 'd3mxusersonline';
+
+    protected $_sMenuSubItemTitle = 'd3mxusersonline_settings';
+
     //protected $_sDebugHelpTextIdent = 'D3_INQUIRY_MAIN_DEBUGACTIVE_DESC';
 }
