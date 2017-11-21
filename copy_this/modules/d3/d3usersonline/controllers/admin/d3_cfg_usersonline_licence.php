@@ -20,6 +20,4 @@ class d3_cfg_usersonline_licence extends d3_cfg_mod_licence
     protected $_hasNewsletterForm = false;
 
     protected $_sLogType = 2;
-
-    //protected $_sBlogFeed = "http://blog.oxidmodule.com/feeds/categories/46-Angebotsanfrage.rss";
 }

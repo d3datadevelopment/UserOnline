@@ -32,7 +32,8 @@ class d3usersonline extends oxbase
     protected $_httpXComingFrom = null;
     protected $_httpComingFrom = null;
 
-    protected $_iDeleteThreshold = 30; // Zeitdifferenz für Löschaufträge
+    protected $_iDeleteThreshold = 30;  // Zeitdifferenz zwischen 2 Löschaufträgen
+    protected $_iExpTime = 600;         // Ablaufzeit für inaktive Benutzer
 
     /**
      * constructor
@@ -46,7 +47,7 @@ class d3usersonline extends oxbase
     /**
      * @param $iExpTime
      */
-    public function clearOldItems($iExpTime)
+    public function clearOldItems()
     {
         startProfile(__METHOD__);
 
@@ -54,7 +55,7 @@ class d3usersonline extends oxbase
         $iLastDeleteTime = oxRegistry::getConfig()->getShopConfVar('iLastDeleteTime', null, 'd3usersonline');
 
         if ($iTime > $iLastDeleteTime + $this->_iDeleteThreshold) {
-            $iExptime = $iTime - $iExpTime;
+            $iExptime = $iTime - $this->_iExpTime;
             oxDb::getDb()->Execute("delete from " . $this->getViewName() . " where timevisit < $iExptime");
 
             oxRegistry::getConfig()->saveShopConfVar('int', 'iLastDeleteTime', $iTime, null, 'd3usersonline');

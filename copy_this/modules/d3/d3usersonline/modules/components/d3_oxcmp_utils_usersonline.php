@@ -20,7 +20,6 @@
 class d3_oxcmp_utils_usersonline extends d3_oxcmp_utils_usersonline_parent
 {
     protected $_blIsComponent = true;
-    protected $_iExpTime = 600; // (in seconds)
     protected $_sD3UsersOnlineModId = 'd3usersonline';
 
     /**
@@ -33,7 +32,7 @@ class d3_oxcmp_utils_usersonline extends d3_oxcmp_utils_usersonline_parent
         if (d3_cfg_mod::get($this->_sD3UsersOnlineModId)->isActive()) {
             /** @var d3usersonline $oUsersOnline */
             $oUsersOnline = oxNew('d3usersonline');
-            $oUsersOnline->clearOldItems($this->_iExpTime);
+            $oUsersOnline->clearOldItems();
             $oUsersOnline->setActTimeVisit();
 
             $oUser = $this->getUser();

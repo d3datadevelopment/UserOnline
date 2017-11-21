@@ -14,7 +14,6 @@
 class d3_usersonline_statistic extends d3_cfg_mod_main
 {
     protected $_blUseOwnOxid = false;
-    protected $_iExpTime = 600; // (in seconds)
     protected $_sThisTemplate = 'd3_usersonline_statistic.tpl';
 
     protected $_sMenuItemTitle = 'd3mxusersonline';
@@ -37,7 +36,7 @@ class d3_usersonline_statistic extends d3_cfg_mod_main
     {
         /** @var d3usersonline $oUsersOnline */
         $oUsersOnline = oxNew('d3usersonline');
-        $oUsersOnline->clearOldItems($this->_iExpTime);
+        $oUsersOnline->clearOldItems();
         return $oUsersOnline->getUserCount($this->blGroupByClass);
     }
 
