@@ -66,12 +66,17 @@ class d3usersonline extends oxbase
     /**
      * @return array
      */
-    public function getUserCount()
+    public function getUserCount($blGroupByClass = false)
     {
         startProfile(__METHOD__);
 
-        $sSelect = "select count(oxid) AS counter, oxclass, oxpage from ".
-            $this->getViewName()." GROUP BY oxclass, oxpage ORDER BY counter desc";
+        if ($blGroupByClass) {
+            $sSelect = "SELECT count(oxid) AS counter, oxclass FROM " .
+                $this->getViewName() . " GROUP BY oxclass ORDER BY counter DESC";
+        } else {
+            $sSelect = "select count(oxid) AS counter, oxclass, oxpage from ".
+                $this->getViewName()." GROUP BY oxclass, oxpage ORDER BY counter desc";
+        }
         $aRecords = oxDb::getDb(oxDb::FETCH_MODE_ASSOC)->getAll($sSelect);
 
         $iAllCounter = 0;

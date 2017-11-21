@@ -21,6 +21,15 @@ class d3_usersonline_statistic extends d3_cfg_mod_main
 
     protected $_sMenuSubItemTitle = 'd3mxusersonline_analysis';
 
+    public $blGroupByClass = false;
+
+    public function render()
+    {
+        $this->blGroupByClass = oxRegistry::getConfig()->getRequestParameter('groupbyclass') == 'true';
+        $this->addTplParam('blGroupByClass', $this->blGroupByClass);
+        return parent::render();
+    }
+
     /**
      * @return array
      */
@@ -29,7 +38,7 @@ class d3_usersonline_statistic extends d3_cfg_mod_main
         /** @var d3usersonline $oUsersOnline */
         $oUsersOnline = oxNew('d3usersonline');
         $oUsersOnline->clearOldItems($this->_iExpTime);
-        return $oUsersOnline->getUserCount();
+        return $oUsersOnline->getUserCount($this->blGroupByClass);
     }
 
     public function getControllerTitle($sControllerIdent)
