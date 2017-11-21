@@ -31,4 +31,31 @@ class d3_usersonline_statistic extends d3_cfg_mod_main
         $oUsersOnline->clearOldItems($this->_iExpTime);
         return $oUsersOnline->getUserCount();
     }
+
+    public function getControllerTitle($sControllerIdent)
+    {
+        $oLang = oxRegistry::getLang();
+        $sTranslationIdent = 'D3_USERSONLINE_CLASS_'.strtoupper($sControllerIdent);
+        $sTranslation = $oLang->translateString(
+            $sTranslationIdent,
+            null,
+            false
+        );
+
+        if ($sTranslation !== $sTranslationIdent) {
+            return $sTranslation;
+        } else {
+            $sTranslationIdent = 'PAGE_TITLE_'.strtoupper($sControllerIdent);
+            $sTranslation = $oLang->translateString(
+                $sTranslationIdent,
+                null,
+                true
+            );
+            if ($sTranslation !== $sTranslationIdent) {
+                return $sTranslation;
+            }
+        }
+
+        return ucfirst($sControllerIdent);
+    }
 }

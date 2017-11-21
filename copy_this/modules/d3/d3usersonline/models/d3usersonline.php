@@ -70,8 +70,8 @@ class d3usersonline extends oxbase
     {
         startProfile(__METHOD__);
 
-        $sSelect = "select count(oxid) AS counter, oxclass from ".
-            $this->getViewName()." GROUP BY oxclass ORDER BY counter desc";
+        $sSelect = "select count(oxid) AS counter, oxclass, oxpage from ".
+            $this->getViewName()." GROUP BY oxclass, oxpage ORDER BY counter desc";
         $aRecords = oxDb::getDb(oxDb::FETCH_MODE_ASSOC)->getAll($sSelect);
 
         $iAllCounter = 0;
@@ -82,6 +82,7 @@ class d3usersonline extends oxbase
 
                 $oTmp = new stdClass;
                 $oTmp->classname = $aRecord['OXCLASS'];
+                $oTmp->page = $aRecord['OXPAGE'];
                 $oTmp->counter = $aRecord['COUNTER'];
                 $iAllCounter += $aRecord['COUNTER'];
                 $aUserClasses['classes'][] = $oTmp;
@@ -103,13 +104,59 @@ class d3usersonline extends oxbase
 
         $aValues = array(
             'timevisit' => time(),
-            'oxclass'   => oxRegistry::getConfig()->getActiveView()->getClassName()
+            'oxclass'   => oxRegistry::getConfig()->getActiveView()->getClassName(),
+            'oxpage'    => $this->getPageIdent(),
         );
 
         $this->assign($aValues);
         $this->save();
 
         stopProfile(__METHOD__);
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getPageIdent()
+    {
+        switch (strtolower(oxRegistry::getConfig()->getActiveView()->getClassName()))
+        {
+            case 'details':
+            case 'oxwarticledetails':
+                if (($oView = oxRegistry::getConfig()->getActiveView())
+                    && method_exists($oView, 'getProduct')
+                ) {
+                    return $oView->getProduct()->getFieldData('oxtitle');
+                }
+                return null;
+            case 'alist':
+            case 'manufacturerlist':
+            case 'vendorlist':
+                if (($oView = oxRegistry::getConfig()->getActiveView())
+                    && method_exists($oView, 'getTitle')
+                ) {
+                    return $oView->getTitle();
+                }
+                return null;
+            case 'search':
+                return oxRegistry::getConfig()->getRequestParameter('searchparam');
+            case 'content':
+                if (($oView = oxRegistry::getConfig()->getActiveView())
+                    && method_exists($oView, 'getContent')
+                ) {
+                    return $oView->getContent()->getFieldData('oxtitle');
+                }
+                return null;
+            case 'tag':
+                if (($oView = oxRegistry::getConfig()->getActiveView())
+                    && method_exists($oView, 'getTag')
+                ) {
+                    return $oView->getTag();
+                }
+                return null;
+        }
+
+        return null;
     }
 
     /**

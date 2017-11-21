@@ -125,10 +125,14 @@
                     <tr>
                         <td>
                             [{if $aClassUser->classname}]
-                                [{$aClassUser->classname|ucfirst}]:
+                                [{$oView->getControllerTitle($aClassUser->classname)}]
                             [{else}]
-                                undefined:
+                                undefined
                             [{/if}]
+                            [{if $aClassUser->page}]
+                                "[{$aClassUser->page}]"
+                            [{/if}]
+                            :
                         </td>
                         <td style="text-align: right; font-weight: bold;">
                             [{$aClassUser->counter}]&nbsp;

@@ -36,4 +36,12 @@ $aLang = array(
     'D3_USERSONLINE_USERS'              => 'users',
     'D3_USERSONLINE_ALL'                => 'all',
     'D3_USERSONLINE_SAVE'               => 'save',
+    'D3_USERSONLINE_CLASS_ALIST'        => 'article list from category',
+    'D3_USERSONLINE_CLASS_MANUFACTURERLIST' => 'article list from manufacturer',
+    'D3_USERSONLINE_CLASS_VENDORLIST'   => 'article list from vendor',
+    'D3_USERSONLINE_CLASS_CONTENT'      => 'information text',
+    'D3_USERSONLINE_CLASS_OXWARTICLEDETAILS' => 'details page',
+    'D3_USERSONLINE_CLASS_DETAILS'      => 'details page',
+    'D3_USERSONLINE_CLASS_START'        => 'start page',
+    'D3_USERSONLINE_CLASS_TAGS'         => 'tag',
 );

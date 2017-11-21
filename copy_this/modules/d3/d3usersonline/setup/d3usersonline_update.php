@@ -93,6 +93,16 @@ DQ9';
             'sExtra'      => '',
             'blMultilang' => false,
         ),
+        'OXPAGE'            => array(
+            'sTableName'  => 'd3usersonline',
+            'sFieldName'  => 'OXPAGE',
+            'sType'       => 'VARCHAR(32)',
+            'blNull'      => false,
+            'sDefault'    => false,
+            'sComment'    => '',
+            'sExtra'      => '',
+            'blMultilang' => false,
+        ),
     );
 
     public $aIndizes = array(
@@ -109,6 +119,15 @@ DQ9';
             'sName'      => 'OXCLASS',
             'aFields'    => array(
                 'OXCLASS' => 'OXCLASS',
+            ),
+        ),
+        'CLASSPAGE' => array(
+            'sTableName' => 'd3usersonline',
+            'sType'      => '',
+            'sName'      => 'CLASSPAGE',
+            'aFields'    => array(
+                'OXCLASS' => 'OXCLASS',
+                'OXPAGE'  => 'OXPAGE',
             ),
         ),
         'TIMEVISIT' => array(
