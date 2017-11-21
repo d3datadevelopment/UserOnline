@@ -108,7 +108,7 @@
 [{d3modcfgcheck modid="d3usersonline"}][{/d3modcfgcheck}]
 [{if $mod_d3usersonline}]
     [{assign var="aUsersOnline" value=$oView->getUserCount()}]
-    <input id="groupbyclasscheckbox" value="1" type="checkbox" [{if $blGroupByClass}]checked[{/if}] onchange="document.getElementById('groupbyclass').value = this.checked; document.getElementById('transfer').submit();"> <label for="groupbyclasscheckbox">Besuche nach Shopseiten gruppieren</label>
+    <input id="groupbyclasscheckbox" value="1" type="checkbox" [{if $blGroupByClass}]checked[{/if}] onchange="document.getElementById('groupbyclass').value = this.checked; document.getElementById('transfer').submit();"> <label for="groupbyclasscheckbox">[{oxmultilang ident="D3_USERSONLINE_GROUPBYCLASS"}]</label>
     <h3>[{oxmultilang ident="D3_USERSONLINE_USERSONLINE"}]</h3>
         <div class="content">
             <table style="border-style: none; width: 100%;">

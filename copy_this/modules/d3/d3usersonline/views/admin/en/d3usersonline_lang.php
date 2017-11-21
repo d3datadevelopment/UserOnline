@@ -31,6 +31,7 @@ $aLang = array(
     'd3mxusersonline_analysis'          => 'Analysis',
     'd3tbclusersonline_currvisitors'    => 'current visitors',
     'D3USERSONLINE_NOTACTIVE'           => "Module isn't active",
+    'D3_USERSONLINE_GROUPBYCLASS'       => 'group visitors by shop pages only',
     'D3_USERSONLINE_USERSONLINE'        => 'Users online',
     'D3_USERSONLINE_USER'               => 'user',
     'D3_USERSONLINE_USERS'              => 'users',
