@@ -61,13 +61,6 @@ $aModule = array(
     'events'      => array(
         'onActivate' => 'd3install::checkUpdateStart',
     ),
-    'blocks'      => array(
-        array(
-            'template' => 'layout/sidebar.tpl',
-            'block' => 'sidebar_categoriestree',
-            'file'     => 'views/blocks/layout/d3usersonline_sidebar.tpl'
-        ),
-    ),
     'd3FileRegister'    => array(
         'd3/d3usersonline/IntelliSenseHelper.php',
         'd3/d3usersonline/metadata.php',
